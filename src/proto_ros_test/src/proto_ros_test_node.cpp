@@ -6,7 +6,7 @@
 #include <ros/ros.h>
 
 
-#include <udp_connect_rsu.h>
+#include <udp_send_to_rsu_client/udp_connect_rsu.h>
 
 
 struct TEST
@@ -29,11 +29,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh("~");
 
     UDP_RSU *udp_rsu = new UDP_RSU();
-
-
-
    //*************************************************************************************************************//
-	
 	//创建发送和接受的结构体以及转化时用到的字符串，用作测试
 	INFO sendinfo,recvinfo;
     char send_info_buf[100];
@@ -47,8 +43,6 @@ int main(int argc, char **argv)
 	sendinfo.test_struct.test = 10;
 	sendinfo.temperature = 23.50;
 
-
-    
     // std::string *sen_str = "hello";
     const char* msg = "Jane Doe"; //发送字符串
     // char send_info_buf1[100] =sen_str;
@@ -56,11 +50,9 @@ int main(int argc, char **argv)
 	//将发送的结构体sendinfo转化为字符串send_info_buf
 	// memcpy(send_info_buf1, &sen_str, sizeof(sen_str));
 //************************************************************************************************************//
-
-
+	ros::Rate loop_rate(1);
 	while (ros::ok())
 	{	
-		usleep(2000000);
 		//发送
 			/*  
 				int sendto(int s, const void* buf, int len, unsigned int flags, const struct sockaddr* to, int tolen);
@@ -77,9 +69,7 @@ int main(int argc, char **argv)
 			//结构体发送和打印所用语句
 			int t = sendto(udp_rsu->clientSocket, msg, sizeof(msg)+1  , 0, (sockaddr*)&(udp_rsu->Client), sizeof(udp_rsu->Client));
 			std::cout << "sendto_len:  "<<t << std::endl<< std::endl;//若发送失败。则返回-1
-
             std::cout << "size of client:  "<< sizeof(udp_rsu->Client)<< std::endl<< std::endl;//若发送失败。则返回-1
-
 		//接收
 			/*  
 				int recvfrom(int s, void *buf, int len, unsigned int flags,struct sockaddr *from, int *fromlen);
@@ -102,6 +92,7 @@ int main(int argc, char **argv)
 			//cout << "Today is  " << recvinfo.year << "." << recvinfo.month<<"." << recvinfo.day << endl;
 			//cout << "The template is " << recvinfo.temperature << endl;
 			//cout << "The struct-test number is " << recvinfo.test_struct.test << endl<< endl;
+			loop_rate.sleep();
 			
 	}
 	//closesocket(sockClient);

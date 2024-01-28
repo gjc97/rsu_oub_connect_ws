@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(proto_ros_test)
+project(udp_receive_test)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -70,7 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   std_msgs
 # )
 
 ################################################
@@ -104,8 +104,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES proto_ros_test
-#  CATKIN_DEPENDS roscpp rospy stdmsg
+#  LIBRARIES udp_receive_test
+#  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -118,16 +118,11 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  ${PROJECT_SOURCE_DIR}/include
-  ${PROJECT_SOURCE_DIR}/proto
 )
 
-
-message( "CMAKE_PROJECT_NAME = " ${catkin_INCLUDE_DIRS})
-message( "PROJECT_SOURCE_DIR = " ${PROJECT_SOURCE_DIR})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/proto_ros_test.cpp
+#   src/${PROJECT_NAME}/udp_receive_test.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -138,13 +133,7 @@ message( "PROJECT_SOURCE_DIR = " ${PROJECT_SOURCE_DIR})
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-
-
-
-FILE(GLOB DIR ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/proto/*.cc ${PROJECT_SOURCE_DIR}/src/udp_send_to_rsu_client/*.cpp)
-
-add_executable(${PROJECT_NAME}_node ${DIR})
-
+# add_executable(${PROJECT_NAME}_node src/udp_receive_test_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,18 +146,9 @@ add_executable(${PROJECT_NAME}_node ${DIR})
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-
-
-SET(PROTOBUF_DIR  /usr/local/lib/)
-
-
-target_link_libraries(${PROJECT_NAME}_node
-  ${catkin_LIBRARIES}
-  ${PROTOBUF_DIR}/libprotobuf.so
-  pthread
-  # protobuf
-
-)
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -217,7 +197,7 @@ target_link_libraries(${PROJECT_NAME}_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_proto_ros_test.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_udp_receive_test.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

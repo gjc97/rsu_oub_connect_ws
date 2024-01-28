@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <iostream>
 class UDP_RSU
 {
 public:
@@ -18,6 +19,7 @@ public:
 
     struct sockaddr_in Server; // 创建服务端sockaddr_in结构体
     struct sockaddr_in Client; // 创建客户端sockaddr_in结构体
+    
 
 
 };
