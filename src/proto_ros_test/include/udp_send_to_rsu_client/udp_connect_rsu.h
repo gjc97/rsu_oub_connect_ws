@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <iostream>
+#include <unistd.h>
 class UDP_RSU
 {
 public:
