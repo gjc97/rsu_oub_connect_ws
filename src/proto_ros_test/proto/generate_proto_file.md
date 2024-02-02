@@ -1,1 +1,1 @@
-protoc --cpp_out=. nebulalink.perceptron3.0.5.proto
+protoc --cpp_out=. nebulalink_perceptron.proto

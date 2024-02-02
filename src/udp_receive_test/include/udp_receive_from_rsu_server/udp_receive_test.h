@@ -1,5 +1,5 @@
-#ifndef UDP_CONNECT_RSU_H
-#define UDP_CONNECT_RSU_H
+#ifndef UDP_RECEIVE_TEST_H
+#define UDP_RECEIVE_TEST_H
 
 
 
@@ -10,30 +10,23 @@
 #include <string.h>
 #include <iostream>
 #include <unistd.h>
-#include <map>
-#include <utility>
-
-#include "udp_send_to_rsu_client/rsu_message.h"
-
-class UDP_RSU
+class UDP_RECEIVE
 {
 public:
-    UDP_RSU();
+    UDP_RECEIVE();
+
     void recvData();
+
     int sock_fd;
 
     struct sockaddr_in dst_addr;
     struct sockaddr_in local_addr;
 
     std::string strLocalIP = "192.168.1.111";
-    int nLocalPort = 10087;
+    int nLocalPort = 10086;
 
     std::string strIP = "192.168.1.104";
     int nPort = 10086;
-
-    //感知数据来源map
-    std::map<std::string,unsigned char> perception_type;
-
 };
 
 #endif

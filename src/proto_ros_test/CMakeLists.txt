@@ -120,6 +120,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/include
   ${PROJECT_SOURCE_DIR}/proto
+  ${PROJECT_SOURCE_DIR}/udp_send_to_rsu_client
 )
 
 
