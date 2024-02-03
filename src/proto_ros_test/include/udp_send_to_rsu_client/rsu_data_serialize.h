@@ -3,6 +3,10 @@
 #include "nebulalink_perceptron.pb.h"
 
 
+typedef nebulalink::perceptron3::TargetSize NP3TARGETSIZE;
+typedef nebulalink::perceptron3::Perceptron NP3PERCEPTION;
+typedef nebulalink::perceptron3::FrameArray NP3FRAMEARRAY;
+
 class RsuDataProto
 {
 public:
@@ -21,12 +25,22 @@ public:
     void SerializePointGPS(nebulalink::perceptron3::PointGPS *input_point_gps);
     void SerializeTargetSizeCFD(nebulalink::perceptron3::TargetSize_CFD *input_target_size_cfd);
 
-    void SerializePerceptron(nebulalink::perceptron3::Perceptron &input_obstacles_info);
-    nebulalink::perceptron3::Perceptron SerializePerceptron();
+    void SerializePerceptron(NP3PERCEPTION &input_obstacles_info);
+    void SerializePerceptronTest(int serialize_method);
+    NP3PERCEPTION SerializePerceptron();
 
-    nebulalink::perceptron3::FrameArray SerializeFrameArrayTest();
-    nebulalink::perceptron3::FrameArray SerializeFrameArray();
-    void SerializeFrameArray(nebulalink::perceptron3::FrameArray &input_frame_array);
+    std::string SerializeFrameArrayTest(NP3FRAMEARRAY &input_frame_array,int serialize_method);
+    std::string DeserializeFrameArrayTest(const NP3FRAMEARRAY input_frame_array);
+
+
+    NP3FRAMEARRAY SerializeFrameArray();
+    void SerializeFrameArray(NP3FRAMEARRAY &input_frame_array);
+
+
+
+
+
+    
 };
 
 #endif

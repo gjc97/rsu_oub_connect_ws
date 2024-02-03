@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <string>
 #include <chrono>
 #include <ctime>
 #include <sstream>
@@ -211,9 +212,9 @@ void RsuDataProto::SerializePointGPS(nebulalink::perceptron3::PointGPS *input_po
   *
   * @return nebulalink::perceptron3::Perceptron 返回序列化后的Perceptron消息
   */
- nebulalink::perceptron3::Perceptron RsuDataProto::SerializePerceptron()
+ NP3PERCEPTION RsuDataProto::SerializePerceptron()
  {
-     nebulalink::perceptron3::Perceptron return_obstacles_info;
+     NP3PERCEPTION return_obstacles_info;
      return_obstacles_info.set_is_tracker(true);
      return_obstacles_info.set_object_confidence(9.9);
      return_obstacles_info.set_lane_id("2");
@@ -238,8 +239,64 @@ void RsuDataProto::SerializePointGPS(nebulalink::perceptron3::PointGPS *input_po
      return return_obstacles_info;
 }
 
+/**
+ * @brief 嵌套消息内容赋值测试
+ * 
+ * @param input_obstacles_info 
+ */
+void RsuDataProto::SerializePerceptronTest(int serialize_method)
+{
+    switch (serialize_method)
+    {
+    case 1:
+    {
+        //赋值方式1（使用set_allocated_）
+        NP3PERCEPTION temp_peceptron;
+        NP3TARGETSIZE *temp_target_size = new nebulalink::perceptron3::TargetSize();
+        temp_target_size->set_object_width(1.1);
+        temp_target_size->set_object_length(1.1);
+        temp_target_size->set_object_height(1.1);
+        
+        temp_peceptron.set_allocated_target_size(temp_target_size);
+    
+        break;
+    }
+    case 2:
+    {
+        //赋值方式2（使用mutable_）
+        NP3PERCEPTION temp_peceptron;
+        NP3TARGETSIZE temp_target_size;
+        temp_target_size.set_object_width(1.1);
+        temp_target_size.set_object_length(1.1);
+        temp_target_size.set_object_height(1.1);
+        temp_peceptron.mutable_target_size()->CopyFrom(temp_target_size);
+        break;
+    }
+    case 3:
+    {
+        //赋值方式3（使用mutable_）：
+        NP3PERCEPTION temp_peceptron;
+        NP3TARGETSIZE *temp_target_size = temp_peceptron.mutable_target_size();
+        temp_target_size->set_object_width(1.1);
+        temp_target_size->set_object_length(1.1);
+        temp_target_size->set_object_height(1.1);
 
-void RsuDataProto::SerializePerceptron(nebulalink::perceptron3::Perceptron &input_obstacles_info)
+        break;
+    }
+    
+    default:
+        break;
+    }
+    
+
+    
+
+
+    return;
+}
+
+
+void RsuDataProto::SerializePerceptron(NP3PERCEPTION &input_obstacles_info)
 {
 
     input_obstacles_info.set_is_tracker(true);
@@ -267,19 +324,112 @@ void RsuDataProto::SerializePerceptron(nebulalink::perceptron3::Perceptron &inpu
     return;
 }
 
-nebulalink::perceptron3::FrameArray RsuDataProto::SerializeFrameArrayTest()
+/**
+ * @brief 测试FrameArray赋值功能
+ * 
+ * @return nebulalink::perceptron3::FrameArray 
+ */
+std::string RsuDataProto::SerializeFrameArrayTest(NP3FRAMEARRAY &input_frame_array,int serialize_method)
+{
+
+    switch (serialize_method)
+    {
+    case 1: //***********方法1：逐个添加元素
+    {
+        NP3FRAMEARRAY temp_frame_array;
+
+        NP3PERCEPTION *temp_obstacles_info1 = temp_frame_array.add_perceptron();
+        temp_obstacles_info1->mutable_point3f()->set_x(1.1);
+        temp_obstacles_info1->mutable_point3f()->set_y(1.2);
+        temp_obstacles_info1->mutable_point3f()->set_z(1.3);
+
+        NP3PERCEPTION *temp_obstacles_info2 = temp_frame_array.add_perceptron();
+        temp_obstacles_info2->mutable_point3f()->set_x(1.4);
+        temp_obstacles_info2->mutable_point3f()->set_y(1.5);
+        temp_obstacles_info2->mutable_point3f()->set_z(1.6);
+
+        NP3PERCEPTION *temp_obstacles_info3 = temp_frame_array.add_perceptron();
+        temp_obstacles_info3->mutable_point3f()->set_x(1.7);
+        temp_obstacles_info3->mutable_point3f()->set_y(1.8);
+        temp_obstacles_info3->mutable_point3f()->set_z(1.9);
+
+        int size_of_frame_array = input_frame_array.perceptron_size();
+
+        std::string serialized_string;
+
+        if (!(temp_frame_array.SerializeToString(&serialized_string)))
+        {
+            // 序列化失败返回空字符串
+            std::cerr << "Frame_Array序列化失败!" << std::endl;
+            return std::string();
+            break;
+        }
+        else
+        {
+            std::cout << "Frame_Array序列化成功" << std::endl;
+            return serialized_string;
+            break;
+        }
+        
+    }
+    case 2:
+    {
+    }
+    case 3:
+    {
+    }
+    default:
+        break;
+        return std::string();
+    }
+
+    // temp_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info1);
+    // temp_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info2);
+    // temp_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info3);
+    //直接将整个temp_frame_array的perceptron()赋值到return_frame_array
+    // return_frame_array.mutable_perceptron()->CopyFrom(temp_frame_array.perceptron());
+    //先copy再add才可以
+    // return_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
+
+    //获得大小
+    // std::cout << "size of return_frame_array:" << return_frame_array_1.perceptron_size() <<std::endl;
+    return std::string();
+    
+}
+
+/**
+ * @brief 测试FrameArray反序列化功能
+ * 
+ * @return std::string 返回反序列化后的string
+ */
+std::string RsuDataProto::DeserializeFrameArrayTest(const NP3FRAMEARRAY input_frame_array)
+{
+    int input_size;
+    std::string return_string;
+    // input_frame_array
+
+    
+    return return_string;
+}
+
+/**
+ * @brief 通过返回值赋值
+ * 
+ * @return nebulalink::perceptron3::FrameArray 
+ */
+NP3FRAMEARRAY RsuDataProto::SerializeFrameArray()
 {
     //逐个添加元素
-    nebulalink::perceptron3::Perceptron temp_obstacles_info;//后续需要设置其属性
-    nebulalink::perceptron3::FrameArray return_frame_array;
+    NP3PERCEPTION temp_obstacles_info;//后续需要设置其属性
+    NP3FRAMEARRAY return_frame_array;
     return_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
 
     //整个repeated赋值
-    nebulalink::perceptron3::FrameArray return_frame_array1;
+    NP3FRAMEARRAY return_frame_array1;
     //添加一些元素到return_frame_array1的Perceptron中
-    nebulalink::perceptron3::Perceptron temp_obstacles_info1;
-    nebulalink::perceptron3::Perceptron temp_obstacles_info2;
-    nebulalink::perceptron3::Perceptron temp_obstacles_info3;
+    NP3PERCEPTION temp_obstacles_info1;
+    NP3PERCEPTION temp_obstacles_info2;
+    NP3PERCEPTION temp_obstacles_info3;
     return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info1);
     return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info2);
     return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info3);
@@ -294,60 +444,44 @@ nebulalink::perceptron3::FrameArray RsuDataProto::SerializeFrameArrayTest()
     
     return return_frame_array;
 }
-
-
-nebulalink::perceptron3::FrameArray RsuDataProto::SerializeFrameArray()
+/**
+ * @brief 通过引用进行赋值
+ * 
+ * @param input_frame_array 
+ */
+void RsuDataProto::SerializeFrameArray(NP3FRAMEARRAY &input_frame_array)
 {
-    //逐个添加元素
-    nebulalink::perceptron3::Perceptron temp_obstacles_info;//后续需要设置其属性
-    nebulalink::perceptron3::FrameArray return_frame_array;
-    return_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
 
-    //整个repeated赋值
-    nebulalink::perceptron3::FrameArray return_frame_array1;
-    //添加一些元素到return_frame_array1的Perceptron中
-    nebulalink::perceptron3::Perceptron temp_obstacles_info1;
-    nebulalink::perceptron3::Perceptron temp_obstacles_info2;
-    nebulalink::perceptron3::Perceptron temp_obstacles_info3;
-    return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info1);
-    return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info2);
-    return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info3);
-    //直接将整个return_frame_array1的perceptron()赋值到return_frame_array
-    return_frame_array.mutable_perceptron()->CopyFrom(return_frame_array1.perceptron());
-    //先copy再add才可以
-    return_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
 
-    //获得大小
-    std::cout << "size of return_frame_array:" << return_frame_array.perceptron_size() <<std::endl;
 
-    
-    return return_frame_array;
-}
-void RsuDataProto::SerializeFrameArray(nebulalink::perceptron3::FrameArray &input_frame_array)
-{
+
+    NP3PERCEPTION temp_perceptron = this->SerializePerceptron();
+
+
+
 
 
         //逐个添加元素
-    nebulalink::perceptron3::Perceptron temp_obstacles_info;//后续需要设置其属性
-    nebulalink::perceptron3::FrameArray return_frame_array;
-    input_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
+    NP3PERCEPTION temp_obstacles_info;//后续需要设置其属性
+    NP3FRAMEARRAY return_frame_array;
+    input_frame_array.add_perceptron()->CopyFrom(temp_perceptron);
 
-    //整个repeated赋值
-    nebulalink::perceptron3::FrameArray return_frame_array1;
-    //添加一些元素到return_frame_array1的Perceptron中
-    nebulalink::perceptron3::Perceptron temp_obstacles_info1;
-    nebulalink::perceptron3::Perceptron temp_obstacles_info2;
-    nebulalink::perceptron3::Perceptron temp_obstacles_info3;
-    return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info1);
-    return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info2);
-    return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info3);
-    //直接将整个return_frame_array1的perceptron()赋值到return_frame_array
-    input_frame_array.mutable_perceptron()->CopyFrom(return_frame_array1.perceptron());
-    //先copy再add才可以
-    input_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
+    // //整个repeated赋值
+    // NP3FRAMEARRAY return_frame_array1;
+    // //添加一些元素到return_frame_array1的Perceptron中
+    // NP3PERCEPTION temp_obstacles_info1;
+    // NP3PERCEPTION temp_obstacles_info2;
+    // NP3PERCEPTION temp_obstacles_info3;
+    // return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info1);
+    // return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info2);
+    // return_frame_array1.add_perceptron()->CopyFrom(temp_obstacles_info3);
+    // //直接将整个return_frame_array1的perceptron()赋值到return_frame_array
+    // input_frame_array.mutable_perceptron()->CopyFrom(return_frame_array1.perceptron());
+    // //先copy再add才可以
+    // input_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
 
     //获得大小
-    std::cout << "size of input_frame_array:" << input_frame_array.perceptron_size() <<std::endl;
-    nebulalink::perceptron3::FrameArray a;
+    // std::cout << "size of input_frame_array:" << input_frame_array.perceptron_size() <<std::endl;
+
     return;
 }

@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="proto_ros_test" type="proto_ros_test_node" name="proto_ros_test_node" output="screen" />
+</launch>

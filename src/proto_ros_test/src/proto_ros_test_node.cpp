@@ -75,36 +75,70 @@ int main(int argc, char **argv)
     rsu_data_proto.GetCurrentTimeStamp(obs_time_base);
     std::string str_obstacles_info;
 
-
     nebulalink::perceptron3::Perceptron obstacles_info = rsu_data_proto.SerializePerceptron();
 
     if (!(obstacles_info.SerializeToString(&str_obstacles_info)))
     {
-        std::cout << "序列化失败!" << std::endl;
+        std::cout << "obstacles_info序列化失败!" << std::endl;
     }
     else
     {
-        std::cout << "序列化成功" << std::endl;
+        std::cout << "obstacles_info序列化成功" << std::endl;
     }
     nebulalink::perceptron3::Perceptron de_obstacles_info;
     if (!de_obstacles_info.ParseFromString(str_obstacles_info))
     {
-        std::cerr << "反序列化失败" << std::endl;
+        std::cerr << "obstacles_info反序列化失败" << std::endl;
     }
     else
     {
-        std::cerr << "反序列化成功" << std::endl;
+        std::cerr << "obstacles_info反序列化成功" << std::endl;
         std::cout << "de_obstacles_info->set_is_tracker:" << de_obstacles_info.is_tracker() <<
         " de_obstacle_info->set_point3:" <<de_obstacles_info.point3f().x()<< std::endl;
     }
 
-    rsu_data_proto.SerializeFrameArray();
-    //
-    rsu_data_proto.SerializeFrameArray();
+
+    nebulalink::perceptron3::FrameArray input_frame_array;
+    rsu_data_proto.SerializeFrameArray(input_frame_array);
     
 
-    ros::Rate loop_rate(10);
-	while (0)
+    std::string serialize_frame_array_str;
+    nebulalink::perceptron3::FrameArray deserialized_frame_array;
+    std::cout << "size of input_frame_array:" << input_frame_array.perceptron_size() <<std::endl;
+
+      if (!(input_frame_array.SerializeToString(&serialize_frame_array_str)))
+    {
+        std::cerr << "input_frame_array序列化失败!" << std::endl;
+    }
+    else
+    {
+        std::cout << "input_frame_array序列化成功" << std::endl;
+    }
+
+
+    if (!deserialized_frame_array.ParseFromString(serialize_frame_array_str))
+    {
+        std::cerr << "input_frame_array反序列化失败" << std::endl;
+    }
+    else
+    {
+        std::cout << "input_frame_array反序列化成功" << std::endl;
+        std::cout << " size of perceptron:" << 
+        deserialized_frame_array.perceptron_size() << 
+        " deserialized_frame_array->object_width:" << 
+        deserialized_frame_array.perceptron(deserialized_frame_array.perceptron_size() - 1).target_size().object_width() << std::endl;
+        // std::cout << "deserialized_frame_array->set_is_tracker:" << deserialized_frame_array.is_tracker() <<
+        // " deserialized_frame_array->set_point3:" <<deserialized_frame_array.point3f().x()<< std::endl;
+    }
+
+
+    // NP3FRAMEARRAY frame_array; 
+    // std::cout << "null frame array size:" << frame_array.perceptron_size() <<std::endl;
+    NP3FRAMEARRAY frame_array1;
+    std::cout << "null frame array size:" << rsu_data_proto.SerializeFrameArrayTest(frame_array1,1).size() <<std::endl;
+
+        ros::Rate loop_rate(10);
+    while (0)
 	{
 
 		// 组建协议
