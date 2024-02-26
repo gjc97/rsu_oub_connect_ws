@@ -55,17 +55,17 @@ int main(int argc, char **argv)
 
     RsuDataProto rsu_data_proto;
 
-    struct Point3 my_object_pos;
+    struct rsu_data_ns::Point3 my_object_pos;
     my_object_pos.x = 1.0;
     my_object_pos.y = 2.0;
     my_object_pos.z = 3.0;
 
-    struct TargetSize my_object_size;
+    struct rsu_data_ns::TargetSize my_object_size;
     my_object_size.object_width = 1.1;
     my_object_size.object_length = 1.2;
     my_object_size.object_height = 1.3;
 
-    struct PointGPS my_object_gps;
+    struct rsu_data_ns::PointGPS my_object_gps;
     my_object_gps.object_latitude = 23.32;
     my_object_gps.object_longitude = 123.321;
     my_object_gps.object_elevation = 13.31;
@@ -100,13 +100,11 @@ int main(int argc, char **argv)
 
     nebulalink::perceptron3::FrameArray input_frame_array;
     rsu_data_proto.SerializeFrameArray(input_frame_array);
-    
-
     std::string serialize_frame_array_str;
     nebulalink::perceptron3::FrameArray deserialized_frame_array;
     std::cout << "size of input_frame_array:" << input_frame_array.perceptron_size() <<std::endl;
 
-      if (!(input_frame_array.SerializeToString(&serialize_frame_array_str)))
+    if (!(input_frame_array.SerializeToString(&serialize_frame_array_str)))
     {
         std::cerr << "input_frame_array序列化失败!" << std::endl;
     }
@@ -127,17 +125,24 @@ int main(int argc, char **argv)
         deserialized_frame_array.perceptron_size() << 
         " deserialized_frame_array->object_width:" << 
         deserialized_frame_array.perceptron(deserialized_frame_array.perceptron_size() - 1).target_size().object_width() << std::endl;
-        // std::cout << "deserialized_frame_array->set_is_tracker:" << deserialized_frame_array.is_tracker() <<
-        // " deserialized_frame_array->set_point3:" <<deserialized_frame_array.point3f().x()<< std::endl;
     }
 
-
-    // NP3FRAMEARRAY frame_array; 
-    // std::cout << "null frame array size:" << frame_array.perceptron_size() <<std::endl;
     NP3FRAMEARRAY frame_array1;
-    std::cout << "null frame array size:" << rsu_data_proto.SerializeFrameArrayTest(frame_array1,1).size() <<std::endl;
+    
+    std::string serialized_str = rsu_data_proto.SerializeFrameArrayTest(frame_array1,1);
+    if(!serialized_str.empty())
+    {
+        std::cout << "*************************************" << std::endl;
+        std::vector<rsu_data_ns::FrameArray> output_frame_array = rsu_data_proto.DeserializeFrameArrayTest(serialized_str);
 
-        ros::Rate loop_rate(10);
+        for(int i = 0; i < output_frame_array.size();i++)
+        {
+            std::cout << "target_size_" << i << ",object_height:" << output_frame_array.at(i).perceptron.target_size.object_height<< std::endl;
+        }
+        
+    }
+
+    ros::Rate loop_rate(10);
     while (0)
 	{
 
@@ -159,39 +164,7 @@ int main(int argc, char **argv)
 
         if (1)
         {
-            nebulalink::perceptron3::Perceptron obstacles_info1;
 
-            obstacles_info1.set_is_tracker(true);
-            obstacles_info1.mutable_ptc_time_stamp()->set_year(obs_time_base.year());
-
-            std::string str_time_base;
-            std::string str_obstacles_info;
-            if (!(obstacles_info1.SerializeToString(&str_obstacles_info) && obs_time_base.SerializeToString(&str_time_base)))
-            {
-                std::cout << "序列化失败!" << std::endl;
-            }
-            else
-            {
-                std::cout << "序列化成功" << std::endl;
-            }
-            nebulalink::perceptron3::TimeBase de_obs_time_base;
-            nebulalink::perceptron3::Perceptron de_obstacles_info;
-
-            if (!(de_obstacles_info.ParseFromString(str_obstacles_info) && de_obs_time_base.ParseFromString(str_time_base)))
-            {
-                std::cerr << "反序列化成功" << std::endl;
-            }
-            std::cout << "反序列化成功！" << str_time_base << std::endl
-                      << "year: " << de_obs_time_base.year()
-                      << " month:" << de_obs_time_base.month()
-                      << " day:" << de_obs_time_base.day()
-                      << " hour:" << de_obs_time_base.hour()
-                      << " min:" << de_obs_time_base.min()
-                      << " second:" << de_obs_time_base.second()
-                      << " ms:" << de_obs_time_base.miilsecond()
-                      << " obstacles_info->object_confidence:" << de_obstacles_info.is_tracker() 
-                      << " obstacles_info->ptc_time_stamp:" << de_obstacles_info.ptc_time_stamp().year() << std::endl;
-        }
 
         int nDataLen = 0;
         sendPointData[5] = nDataLen;

@@ -1,7 +1,7 @@
 #ifndef RSU_DATA_SERIALIZE_H
 #define RSU_DATA_SERIALIZE_H
 #include "nebulalink_perceptron.pb.h"
-
+#include "udp_send_to_rsu_client/rsu_message.h"
 
 typedef nebulalink::perceptron3::TargetSize NP3TARGETSIZE;
 typedef nebulalink::perceptron3::Perceptron NP3PERCEPTION;
@@ -22,15 +22,16 @@ public:
     void SerializePoint3(nebulalink::perceptron3::Point3 *input_point3);
     void SerializeSpeed3(nebulalink::perceptron3::Speed3 *input_speed3);
     void SerializeTargetSize(nebulalink::perceptron3::TargetSize *input_target_size);
+
     void SerializePointGPS(nebulalink::perceptron3::PointGPS *input_point_gps);
     void SerializeTargetSizeCFD(nebulalink::perceptron3::TargetSize_CFD *input_target_size_cfd);
 
     void SerializePerceptron(NP3PERCEPTION &input_obstacles_info);
-    void SerializePerceptronTest(int serialize_method);
+    void SerializePerceptronTest(NP3PERCEPTION &input_perceptron,int serialize_method);
     NP3PERCEPTION SerializePerceptron();
 
     std::string SerializeFrameArrayTest(NP3FRAMEARRAY &input_frame_array,int serialize_method);
-    std::string DeserializeFrameArrayTest(const NP3FRAMEARRAY input_frame_array);
+    std::vector<rsu_data_ns::FrameArray> DeserializeFrameArrayTest(const std::string input_serialized_str);
 
 
     NP3FRAMEARRAY SerializeFrameArray();

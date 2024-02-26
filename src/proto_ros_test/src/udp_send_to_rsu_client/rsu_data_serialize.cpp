@@ -1,11 +1,12 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <chrono>
 #include <ctime>
 #include <sstream>
 #include "udp_send_to_rsu_client/rsu_data_serialize.h"
-#include "udp_send_to_rsu_client/rsu_message.h"
+
 
 
 RsuDataProto::RsuDataProto()
@@ -244,7 +245,7 @@ void RsuDataProto::SerializePointGPS(nebulalink::perceptron3::PointGPS *input_po
  * 
  * @param input_obstacles_info 
  */
-void RsuDataProto::SerializePerceptronTest(int serialize_method)
+void RsuDataProto::SerializePerceptronTest(NP3PERCEPTION &input_perceptron,int serialize_method)
 {
     switch (serialize_method)
     {
@@ -254,22 +255,23 @@ void RsuDataProto::SerializePerceptronTest(int serialize_method)
         NP3PERCEPTION temp_peceptron;
         NP3TARGETSIZE *temp_target_size = new nebulalink::perceptron3::TargetSize();
         temp_target_size->set_object_width(1.1);
-        temp_target_size->set_object_length(1.1);
-        temp_target_size->set_object_height(1.1);
+        temp_target_size->set_object_length(1.2);
+        temp_target_size->set_object_height(1.3);
         
         temp_peceptron.set_allocated_target_size(temp_target_size);
-    
+        input_perceptron = temp_peceptron;
         break;
     }
     case 2:
     {
-        //赋值方式2（使用mutable_）
+        //赋值方式2（使用mutable_），结合CopyFrom
         NP3PERCEPTION temp_peceptron;
         NP3TARGETSIZE temp_target_size;
-        temp_target_size.set_object_width(1.1);
-        temp_target_size.set_object_length(1.1);
-        temp_target_size.set_object_height(1.1);
+        temp_target_size.set_object_width(1.4);
+        temp_target_size.set_object_length(1.5);
+        temp_target_size.set_object_height(1.6);
         temp_peceptron.mutable_target_size()->CopyFrom(temp_target_size);
+        input_perceptron = temp_peceptron;
         break;
     }
     case 3:
@@ -277,10 +279,10 @@ void RsuDataProto::SerializePerceptronTest(int serialize_method)
         //赋值方式3（使用mutable_）：
         NP3PERCEPTION temp_peceptron;
         NP3TARGETSIZE *temp_target_size = temp_peceptron.mutable_target_size();
-        temp_target_size->set_object_width(1.1);
-        temp_target_size->set_object_length(1.1);
-        temp_target_size->set_object_height(1.1);
-
+        temp_target_size->set_object_width(1.7);
+        temp_target_size->set_object_length(1.8);
+        temp_target_size->set_object_height(1.9);
+        input_perceptron = temp_peceptron;
         break;
     }
     
@@ -325,7 +327,7 @@ void RsuDataProto::SerializePerceptron(NP3PERCEPTION &input_obstacles_info)
 }
 
 /**
- * @brief 测试FrameArray赋值功能
+ * @brief 测试FrameArray赋值功能,重复消息内容赋值（带有repeated字段的消息）
  * 
  * @return nebulalink::perceptron3::FrameArray 
  */
@@ -334,27 +336,68 @@ std::string RsuDataProto::SerializeFrameArrayTest(NP3FRAMEARRAY &input_frame_arr
 
     switch (serialize_method)
     {
-    case 1: //***********方法1：逐个添加元素
+    case 1: //***********方法1：通过add_依次赋值，逐个添加元素，类似于Vector中的push_back()
     {
         NP3FRAMEARRAY temp_frame_array;
-
+        //第一个
         NP3PERCEPTION *temp_obstacles_info1 = temp_frame_array.add_perceptron();
         temp_obstacles_info1->mutable_point3f()->set_x(1.1);
         temp_obstacles_info1->mutable_point3f()->set_y(1.2);
         temp_obstacles_info1->mutable_point3f()->set_z(1.3);
-
+        temp_obstacles_info1->mutable_target_size()->set_object_length(1.1);
+        temp_obstacles_info1->mutable_target_size()->set_object_width(1.2);
+        temp_obstacles_info1->mutable_target_size()->set_object_height(1.3);
+        //第二个
         NP3PERCEPTION *temp_obstacles_info2 = temp_frame_array.add_perceptron();
         temp_obstacles_info2->mutable_point3f()->set_x(1.4);
         temp_obstacles_info2->mutable_point3f()->set_y(1.5);
         temp_obstacles_info2->mutable_point3f()->set_z(1.6);
-
+        temp_obstacles_info2->mutable_target_size()->set_object_length(1.4);
+        temp_obstacles_info2->mutable_target_size()->set_object_width(1.5);
+        temp_obstacles_info2->mutable_target_size()->set_object_height(1.6);
+        //第三个
         NP3PERCEPTION *temp_obstacles_info3 = temp_frame_array.add_perceptron();
         temp_obstacles_info3->mutable_point3f()->set_x(1.7);
         temp_obstacles_info3->mutable_point3f()->set_y(1.8);
         temp_obstacles_info3->mutable_point3f()->set_z(1.9);
+        temp_obstacles_info3->mutable_target_size()->set_object_length(1.7);
+        temp_obstacles_info3->mutable_target_size()->set_object_width(1.8);
+        temp_obstacles_info3->mutable_target_size()->set_object_height(1.9);
 
         int size_of_frame_array = input_frame_array.perceptron_size();
 
+        std::string serialized_string;
+
+        if (!(temp_frame_array.SerializeToString(&serialized_string)))
+        {
+            // 序列化失败返回空字符串
+            std::cerr << "Frame_Array序列化失败!" << std::endl;
+            return std::string();
+            break;
+        }
+        else
+        {
+            std::cout << "Frame_Array序列化成功,size of str is:" <<serialized_string.size() << std::endl;
+
+            return serialized_string;
+            break;
+        }
+        
+    }
+    case 2:////***********方法1：整体赋值：将整个vector类型的变量整体赋值给repeated类型的变量
+    {
+        std::vector<NP3PERCEPTION> temp_perceptron_vector;
+        NP3PERCEPTION temp_perceptron;
+        //1.先对vector进行push_back
+        this->SerializePerceptronTest(temp_perceptron,1);
+        temp_perceptron_vector.push_back(temp_perceptron);
+        this->SerializePerceptronTest(temp_perceptron, 2);
+        temp_perceptron_vector.push_back(temp_perceptron);
+        this->SerializePerceptronTest(temp_perceptron, 3);
+        temp_perceptron_vector.push_back(temp_perceptron);
+
+        NP3FRAMEARRAY temp_frame_array;
+        temp_frame_array.mutable_perceptron()->CopyFrom({temp_perceptron_vector.begin(),temp_perceptron_vector.end()});
         std::string serialized_string;
 
         if (!(temp_frame_array.SerializeToString(&serialized_string)))
@@ -370,10 +413,7 @@ std::string RsuDataProto::SerializeFrameArrayTest(NP3FRAMEARRAY &input_frame_arr
             return serialized_string;
             break;
         }
-        
-    }
-    case 2:
-    {
+
     }
     case 3:
     {
@@ -398,18 +438,39 @@ std::string RsuDataProto::SerializeFrameArrayTest(NP3FRAMEARRAY &input_frame_arr
 }
 
 /**
- * @brief 测试FrameArray反序列化功能
+ * @brief 测试FrameArray反序列化功能,将repeated类型的变量赋值给vector类型
  * 
  * @return std::string 返回反序列化后的string
  */
-std::string RsuDataProto::DeserializeFrameArrayTest(const NP3FRAMEARRAY input_frame_array)
+std::vector<rsu_data_ns::FrameArray> RsuDataProto::DeserializeFrameArrayTest(const std::string input_serialized_str)
 {
-    int input_size;
-    std::string return_string;
-    // input_frame_array
 
-    
-    return return_string;
+    std::vector<rsu_data_ns::FrameArray> return_frame_array_vector;
+    if(input_serialized_str.empty())
+    {
+        std::cerr << "input string is empty!!" << std::endl;
+    }
+    else
+    {
+        nebulalink::perceptron3::FrameArray deserialized_frame_array;
+        if (!deserialized_frame_array.ParseFromString(input_serialized_str))
+        {
+            std::cerr << "FrameArray反序列化失败" << std::endl;
+        }
+        else
+        {
+            std::cout << "FrameArray反序列化成功" << std::endl;
+            rsu_data_ns::FrameArray temp_frame_array_struct;
+            for(int i = 0;i < deserialized_frame_array.perceptron_size();i++)
+            {
+                temp_frame_array_struct.perceptron.target_size.object_height = deserialized_frame_array.perceptron(i).target_size().object_height();
+                return_frame_array_vector.push_back(temp_frame_array_struct);
+                
+            }
+            return return_frame_array_vector;
+        } 
+    }   
+    return return_frame_array_vector;
 }
 
 /**
@@ -451,18 +512,10 @@ NP3FRAMEARRAY RsuDataProto::SerializeFrameArray()
  */
 void RsuDataProto::SerializeFrameArray(NP3FRAMEARRAY &input_frame_array)
 {
-
-
-
-
     NP3PERCEPTION temp_perceptron = this->SerializePerceptron();
 
-
-
-
-
-        //逐个添加元素
-    NP3PERCEPTION temp_obstacles_info;//后续需要设置其属性
+    // 逐个添加元素
+    NP3PERCEPTION temp_obstacles_info; // 后续需要设置其属性
     NP3FRAMEARRAY return_frame_array;
     input_frame_array.add_perceptron()->CopyFrom(temp_perceptron);
 
@@ -480,8 +533,8 @@ void RsuDataProto::SerializeFrameArray(NP3FRAMEARRAY &input_frame_array)
     // //先copy再add才可以
     // input_frame_array.add_perceptron()->CopyFrom(temp_obstacles_info);
 
-    //获得大小
-    // std::cout << "size of input_frame_array:" << input_frame_array.perceptron_size() <<std::endl;
+    // 获得大小
+    //  std::cout << "size of input_frame_array:" << input_frame_array.perceptron_size() <<std::endl;
 
     return;
 }
