@@ -20,15 +20,19 @@ class UDP_RSU
 public:
     UDP_RSU();
     void recvData();
+
     int sock_fd;
 
     struct sockaddr_in dst_addr;
     struct sockaddr_in local_addr;
 
-    std::string strLocalIP = "192.168.1.111";
+    // std::string strLocalIP = "192.168.20.226";
+    std::string strLocalIP = "127.0.0.1";
     int nLocalPort = 10087;
 
-    std::string strIP = "192.168.1.104";
+    std::string strIP = "192.168.20.224";
+    // std::string strIP = "127.0.0.1";
+
     int nPort = 10086;
 
     //感知数据来源map

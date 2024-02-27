@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>proto_ros_test</name>
+  <name>proto_ros_send</name>
   <version>0.0.0</version>
   <description>The proto_ros_test package</description>
 

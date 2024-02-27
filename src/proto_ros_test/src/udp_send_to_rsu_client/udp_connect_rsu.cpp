@@ -1,6 +1,7 @@
 #include "udp_send_to_rsu_client/udp_connect_rsu.h"
 
 
+
 UDP_RSU::UDP_RSU()
 {
 
@@ -38,16 +39,12 @@ UDP_RSU::UDP_RSU()
 	//*************************************************************************************************************//
 
 
-
-
-    //指定接收地址
     dst_addr.sin_family = AF_INET;
     dst_addr.sin_addr.s_addr = inet_addr(strIP.c_str());
     dst_addr.sin_port = htons(nPort);
      //********************************发送的ip地址**************************************
 
 }
-
 
 void UDP_RSU::recvData()
 {
