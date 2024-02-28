@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="udp_receive_test" type="udp_receive_test_node" name="udp_receive_test_node" output="screen" />
+</launch>

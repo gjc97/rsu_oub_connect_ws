@@ -1,0 +1,1081 @@
+syntax = "proto3";
+
+package nebulalink_pro_message;  
+
+//注册帧(RegisterFrame)
+message RegisterFrame{
+	int32 element_type = 1;							    //单元类型	
+	bytes name = 2;								        //名称
+	message SetPermission{
+		int32 type = 1;								    //权限类型
+		int32 level = 2;							    //权限级别	
+		int32 time_interval = 3;					    //上传间隔
+   }								
+   repeated SetPermission SetPermissionValue = 3; 	    //权限设置
+}
+
+//*********************************************************************************************************************
+
+//请求数据帧(RequestFrame)
+message RequestFrame{
+	int32 type = 1;									    //请求数据类型
+}
+
+//*********************************************************************************************************************
+
+//应答数据帧(ResponseFrame)
+message ResponseFrame{
+    oneof result
+    {
+        CommunicationRecord record = 1;                 //通信记录信息
+        VersionInformation info = 2;                    //版本信息
+    }
+}
+
+//通信记录(CommunicationRecord)
+message CommunicationRecord{
+	int32 msg_type = 1;							        //通信消息类型
+	int32 send_count = 2;						        //发送数据包数量
+	int32 send_total_byte = 3;					        //发送数据总长度
+	int32 recv_count = 4;						        //接收数据包数量
+	int32 recv_total_count = 5;					        //接收数据总长度
+}
+
+//版本信息(VersionInformation)
+message VersionInformation{
+    int32 type = 1;                                     //当前类型
+	bytes version = 2; 					                //当前版本
+	bytes project = 3;							        //项目分支
+}
+
+//*********************************************************************************************************************
+
+//路径点位置信息(PointSiteInfo)
+message PointSiteInfo{
+	double longitude = 1;			                    //经度
+	double latitude = 2;			                    //纬度
+	double altitude = 3;			                    //海拔
+}
+
+//路径点定位信息(PointPosInfo)
+message PointPosInfo{
+	double point_longitude = 1;					        //路径点经度					
+	double point_latitude = 2;					        //路径点纬度
+	double point_altitude = 3;					        //路径点海拔
+	float point_speed = 4;						        //路径点速度
+	float point_heading = 5;					        //路径点方向
+	int64 point_time = 6;						        //路径点定位时间
+}	
+
+//路径点信息(PathPointInfo)
+message PathPointInfo{
+	int64 time = 1; 	                                //时间戳
+	double longitude = 2;		                        //经度
+ 	double latitude	= 3;	                            //纬度
+ 	double altitude = 4;		                        //海拔
+	float speed = 5;		                            //速度
+	float heading = 6;		                            //方向
+	float acc4way_lon = 7;		                        //纵向加速度
+	float acc4way_lat = 8;		                        //横向加速度
+	float acc4way_vert = 9;		                        //垂直加速度
+	float acc4way_yaw = 10;		                        //角加速度
+	float distance = 11;		                        //距结束点距离
+	int64 upper_node_id = 12;		                    //上游节点ID
+	int64 down_node_id = 13;		                    //下游节点ID
+	int32 relate_lane = 14;		                        //所属车道  
+}	
+
+//关联路径信息
+message RelatePathInfo{
+	float path_radius = 1;					            //影响半径
+	repeated PointSiteInfo PathPoints = 2;	            //关联路径位置点
+}
+
+//关联路段信息
+message RelateLinkInfo{
+	int64 up_node_id = 1;					            //上游节点ID
+	int64 down_node_id = 2;	                            //下游节点ID
+	message RelateLane{
+	    int32 lane_id = 1;                              //车道ID
+	}
+	repeated RelateLane lanes = 3;                      //关联车道                   
+}
+
+//限速信息(SpeedLimitInfo)
+message SpeedLimitInfo{
+	int32 speed_limit_type = 1;		                    //限速类型
+	float speed = 2;				                    //速度值
+}
+
+//限速结果信息(SpeedLimitResult)
+message SpeedLimitResult{
+	float ceiling = 1;		                            //速度上限	
+	float floor = 2;				                    //速度下限
+}
+
+//四轴加速度信息(Acc4wayInfo)
+message Acc4wayInfo{
+	float acc4way_lon = 1;                              //纵向加速度
+	float acc4way_lat = 2;                              //横向加速度
+	float acc4way_vert = 3;                             //垂直加速度
+	float acc4way_yaw = 4;                              //角加速度
+}
+
+//GNSS信息(GnssInfo)
+message GnssInfo{
+	double longitude = 1;                               //经度		
+	double latitude = 2;                                //纬度		
+	double altitude = 3;                                //海拔		
+	int64 time = 4;                                     //时间戳		 
+	float speed = 5;                                    //速度		 
+	float heading = 6;                                  //速度方向		 
+	float accel = 7;                                    //加速度		 
+	float accel_angle = 8;                              //加速度方向	
+	int32 satellite_num = 9;                            //定位卫星数
+	float precision = 10;                               //精度		
+	Acc4wayInfo acc = 11;                               //四轴加速度	
+}
+
+//车辆基本信息(VehicleInfo)
+message VehicleInfo{	
+    bytes plate_num = 1;							    //车牌号
+	int32 vehicle_class = 2;						    //车辆类型
+	int32 fuel_type = 3;							    //燃料动力类型
+	bytes brand_and_type = 4;						    //车辆品牌型号
+	float length = 5;								    //车长
+	float width = 6;								    //车宽
+	float height = 7;								    //车高
+}
+
+//CAN基本信息(CanInfo)
+message CanInfo{
+	int32 transmission_state_source = 1; 			    //档位来源
+	int32 transmission_state = 2;					    //档位
+	int32 speed_can_valid = 3;						    //can车速有效性
+	float speed_can = 4;							    //can车速
+	int32 heading_can_speed = 5;					    //can车速方向有效性
+	float heading_can = 6;							    //can车速方向
+    Acc4wayInfo acc_can = 7;                            //can四轴加速度
+	int32 steering_wheel_angle_valid = 8;			    //方向盘转角有效性
+	float steering_wheel_angle = 9;				        //方向盘转角	
+    int32 brake_state_valid = 10;					    //制动状态有效性
+	int32 brake_pedal_state = 11;					    //制动踏板状态
+	int32 brake_applied_state = 12;					    //制动器状态
+	int32 traction_control_state = 13;				    //TractionControl系统状态
+	int32 abs_state = 14;							    //防抱死系统状态
+	int32 stability_control_state = 15;				    //StabilityControl系统状态
+	int32 brake_boost_applied = 16;					    //BrakeBoostApplied
+	int32 auxiliary_brake_state = 17;				    //AuxiliaryBrakeStatus
+	int32 vehicle_event_flag_source = 18;			    //车辆事件标志来源
+	int32 vehicle_event_flag = 19;					    //车辆事件标志
+	int32 vehicle_lights_state_source = 20;			    //车辆灯光来源
+	int32 vehicle_lights_state = 21;				    //车辆灯光状态
+	int32 brake_pedal_depth_source = 22;			    //制动踏板深度有效性
+	float brake_pedal_depth = 23;					    //制动踏板深度
+}
+
+//时间范围(TimeRange)
+message TimeRange{
+	int64 start_time = 1;                               //起始时间
+	int64 end_time = 2;                                 //结束时间
+}
+
+//预测轨迹(PathPrediction)
+message PathPrediction{
+	int32 radius = 1;                                   //预测半径
+	int32 confidence = 2;                               //置信度
+}
+
+//*********************************************************************************************************************
+
+//自身OBU信息(HostObu)
+message HostObu{
+	bytes device_id = 1;							    //设备ID
+	bytes expand_info = 2;                              //扩展描述
+    GnssInfo gnss_info = 3;                             //GNSS信息
+    VehicleInfo veh_info = 4;                           //车辆基本信息
+    CanInfo can_info = 5;                               //CAN信息
+	repeated PointPosInfo HistoryPath = 6;              //地图历史路径信息
+	PathPrediction predict_path = 7;                    //预测轨迹
+}
+
+//自身RSU信息(HostRsu)
+message HostRsu{
+	int32 version = 1;								    //版本信息
+	bytes device_id = 2;							    //设备ID	
+	double longitude = 3;							    //经度
+	double latitude = 4;							    //纬度
+	double altitude = 5;							    //海拔
+}	
+
+//自身信息(HostInfo)
+message HostInfo{
+	int32 device_type = 1;							    //设备类型
+	HostObu Obu = 2;					                //自身OBU
+	HostRsu Rsu = 3;					                //自身RSU
+}
+
+//*********************************************************************************************************************
+
+//非自身OBU(OtherObu)
+message OtherObu{
+	message ObuInfo{
+		bytes device_id = 1;						    //设备ID
+        GnssInfo gnss_info = 2;                         //GNSS信息
+        VehicleInfo veh_info = 3;                       //车辆基本信息
+        CanInfo can_info = 4;                           //CAN信息
+		repeated PointPosInfo HistoryPath = 5;          //地图历史路径信息
+		PathPrediction predict_path = 6;                //预测轨迹
+	}
+	repeated ObuInfo Obus = 1;	                        //非自身OBU信息
+}
+
+//*********************************************************************************************************************
+
+//非自身RSU(OtherRsu)
+message OtherRsu{
+	message RsuInfo{
+		int32 version = 1;							    //版本信息
+		bytes device_id = 2;						    //设备ID
+		//gps信息
+		double longitude = 3;						    //经度
+		double latitude = 4;						    //纬度
+		double altitude = 5;						    //海拔
+	}
+	repeated RsuInfo Rsus = 1;	                        //非自身RSU信息
+}
+
+//*********************************************************************************************************************
+
+//路侧交通参与者信息：机动车(PTV)
+message PTV{
+	repeated PtvInfomation Ptvs = 1;	                //PTV信息
+}
+
+//交通参与者信息机动车(PtvInfomation)
+message PtvInfomation{
+	int32 detect_id = 1; 								//感知ID
+	int32 source_type = 2;						        //对象来源
+	bytes source_id = 3;						        //对象来源ID
+    GnssInfo gnss_info = 4;                             //GNSS信息
+    VehicleInfo veh_info = 5;                           //车辆基本信息
+	repeated PointPosInfo history_points = 6;           //历史路径	
+	int32 type = 7;								        //单元类型
+}
+
+//*********************************************************************************************************************
+
+//路侧交通参与者信息：非机动车(PNV)
+message PNV{
+	repeated PnvInfomation Pnvs = 1;	                //PNV信息
+}
+
+//交通参与者信息非机动车(PnvInfomation)
+message PnvInfomation{
+	int32 type = 1;								        //单元类型
+	int32 detect_id = 2; 								//感知ID
+	int32 source_type = 3;						        //对象来源
+	bytes source_id = 4;						        //对象来源ID
+    GnssInfo gnss_info = 5;                             //GNSS信息
+	repeated PointPosInfo history_points = 6;           //历史路径		
+}
+
+//*********************************************************************************************************************
+
+//Lane连接信息(LaneConnection)
+message LaneConnection{
+	int64 node_id = 1;				                    //节点ID
+	int32 phase_id = 2;				                    //关联相位ID
+	int32 lane_id = 3;				                    //车道ID
+	int32 allowed_maneuvers = 4;	                    //允许转向行为
+}
+
+//地图LANE信息(Maplane)
+message MapLane{
+	int32 lane_id = 1;					                //车道号
+	int32 lane_width = 2;				                //车道宽度
+	int32 allowed_maneuvers = 3;		                //允许转向行为
+	int32 lane_sharing = 4;				                //共享车道
+	int32 lane_attributes_type = 5; 	                //车道类型
+	repeated SpeedLimitInfo limits = 6;                 //车道限速
+	repeated LaneConnection connections = 7;            //车道连接信息
+	repeated PointSiteInfo points = 8;	                //车道的位置点
+}
+
+//Link移动信息(LinkMovement)
+message LinkMovement{
+	int64 node_id = 1;					                //节点号
+	int32 phase_id = 2;					                //信号灯相位号
+}
+
+//地图LINK信息(MapLink)
+message MapLink{
+	int64 upstr_node_id = 1;				            //上游节点
+	bytes name = 2;						                //名称
+	float lane_width = 3;					            //车道宽度
+	repeated SpeedLimitInfo limits = 4;                 //路段限速
+	repeated PointSiteInfo points = 5;                  //路段位置点
+	repeated LinkMovement movements = 6;	            //路段连接关系
+	repeated MapLane lanes = 7;	                        //路段包含的车道信息
+}
+
+//地图节点信息(MapNode)
+message MapNode{
+	double longitude = 1;						        //经度
+	double latitude = 2;						        //纬度
+	double altitude = 3;						        //海拔
+	bytes name = 4;							            //名称
+	int64 node_id = 5;							        //节点ID
+	repeated MapLink links = 6;	                        //地图节点包含的路段信息
+}
+
+//逻辑地图(LogicalMap)
+message LogicalMap{
+	int64 time = 1;									    //时间戳	
+	repeated MapNode nodes = 2;	                        //地图节点
+}
+
+//*********************************************************************************************************************
+
+//道路交通标志(RTS)
+message RTS{
+	repeated RtsData rtses = 1;				            //道路交通标志数据
+}
+
+//道路交通标志(RtsData)
+message RtsData{
+	int32 rts_id = 1;							        //标志编号
+	int32 rts_type = 2;							        //标志类型
+	double rts_longitude = 3;					        //标志经度
+	double rts_latitude = 4;					        //标志纬度
+	double rts_altitude = 5;					        //标志海拔
+	bytes rts_description = 6;					        //标志描述
+	int64 rts_start_time = 7;					        //标志起始时间
+	int64 rts_end_time = 8;						        //标志结束时间
+	int32 rts_priority = 9;						        //标志优先级
+	repeated RelatePathInfo paths = 10;	                //关联路径信息
+	repeated RelateLinkInfo links = 11;	                //关联路段信息
+	//所属路侧信息
+	double rsu_longitude = 12;					        //RSU经度
+	double rsu_latitude = 13;					        //RSU纬度
+	double rsu_altitude = 14;					        //RSU海拔
+	int64 rsu_time = 15;						        //RSU时间戳
+	bytes rsu_id = 16;							        //RSU ID
+}
+
+//*********************************************************************************************************************
+
+//道路交通事件(RTE)
+message RTE{
+	repeated RteData rtes = 1;				            //道路交通事件数据
+}
+
+//交通事件信息(RteData)
+message RteData{
+	int32 rte_id = 1;							        //事件编号
+	int32 rte_type = 2;							        //事件类型
+	int32 rte_source = 3;						        //事件源
+	double rte_longitude = 4;					        //事件经度
+	double rte_latitude = 5;					        //事件纬度
+	double rte_altitude = 6;					        //事件海拔
+	float rte_radius = 7;						        //事件半径
+	bytes rte_description = 8;					        //事件描述
+	int64 rte_start_time = 9;					        //事件起始时间
+	int64 rte_end_time = 10;					        //事件结束时间
+	int32 rte_priority = 11;					        //事件优先级		
+	repeated RelatePathInfo paths = 12;	                //关联路径信息
+	repeated RelateLinkInfo links = 13;	                //关联路段信息
+	//所属路侧信息
+	double rsu_longitude = 14;					        //RSU经度
+	double rsu_latitude = 15;					        //RSU纬度
+	double rsu_altitude = 16;					        //RSU海拔
+	int64 rsu_time = 17;						        //RSU时间戳
+	bytes rsu_id = 18;							        //RSU ID
+}
+
+//*********************************************************************************************************************
+
+//信号灯相位状态(PhaseStatus)
+message PhaseStatus{
+	int32 light_status = 1;					            //灯色状态
+	float start_time = 2;					            //开始时间
+	float min_end_time = 3;					            //最小结束时间
+	float max_end_time = 4;					            //最大结束时间
+	float end_time = 5;						            //结束时间
+	int32 time_confidence = 6;				            //结束时间置信度
+	float next_start_time = 7;				            //下次开始时间
+	float next_cycle = 8;					            //下一周期
+}
+
+//信号灯相位信息(TrafficLightPhase)
+message TrafficLightPhase{
+	int32 phase_id = 1;						            //相位ID
+	repeated PhaseStatus status = 2;		            //相位状态
+}
+
+//信号灯(TrafficLight)
+message TrafficLight{
+	message TrafficInformation{
+		bytes description = 1;						    //信号灯描述
+		int64 intersection_region_node_id = 2;		    //信号灯所在路口
+		int32 status = 3;							    //信号灯状态
+		int64 time = 4;								    //时间戳
+		int32 time_confidence = 5;					    //时间置信度
+		repeated TrafficLightPhase phases = 6;	        //信号灯相位
+	}
+	repeated TrafficInformation trafficLights = 1;	    //信号灯信息
+}
+
+//*********************************************************************************************************************
+
+//信号灯配时方案(TrafficSignalPlan)
+message TrafficSignalPlan{
+	message TrafficSignal{
+		bytes signal_name = 1;						    //信号灯名称
+		int64 intersection_region_node_id = 2;		    //信号灯所在路口
+		float signal_offset = 3;					    //时钟偏移
+		int32 sync_time = 4;						    //同步时间
+		int32 status = 5;							    //信号灯状态
+		int32 time_zone = 6;						    //信号灯所在时区
+		message TrafficSignalPlanInfo{
+			bytes plan_name = 1;					    //方案描述
+			int32 plan_id = 2;						    //方案id
+			int32 start_tim = 3;					    //方案开始时间
+			int32 end_time = 4;						    //方案结束时间
+			float cycle = 5;						    //方案周期长度
+			float offset = 6;						    //时间偏移(offset)
+			int32 reference_phase_1 = 7;			    //参考相位1编号
+			int32 reference_phase_2 = 8;			    //参考相位2编号
+			int32 reference_phase_3 = 9;			    //参考相位3编号
+			int32 reference_phase_4 = 10;			    //参考相位4编号
+			bytes reference_type = 11;				    //偏移参考类型
+			message TrafficSignalPlanPhase{
+				int32 phase_id = 1;					    //相位ID
+				float local_start = 2;				    //相位本地起始点
+				float pre_green = 3;				    //前导绿灯时长
+				float green = 4;					    //相位绿灯时长
+				float min_green = 5;				    //相位最小绿灯时长
+				float max_green = 6;				    //相位最大绿灯时长
+				float yellow = 7;					    //相位黄灯时长
+				float yellow_flash = 8;				    //相位闪黄灯时长
+				float red = 9;						    //相位全红灯时长
+				float red_flash = 10;				    //相位闪红灯时长
+				float ped_green = 11;				    //行人绿灯时长
+				float ped_green_flash = 12;			    //行人绿闪时长
+			}
+			repeated TrafficSignalPlanPhase TrafficSignalPlanPhaseValue = 12;	//信号灯配时相位，其中所有数据和当前时间无关
+		}
+		repeated TrafficSignalPlanInfo TrafficSignalPlanInfoValue = 7;	//信号灯配时方案
+	}
+	repeated TrafficSignal TrafficSignalValue = 1;	//信号灯信息（用于TSP）
+}
+
+//*********************************************************************************************************************
+
+//信号灯配时方案偏移部分(TrafficSignalPlan - Offset)
+message TrafficSignalPlanOffset{
+	message TrafficSignal{
+		int64 intersection_region_node_id = 1;		    //信号灯所在路口
+		float signal_offset = 2;					    //时钟偏移
+	}
+	repeated TrafficSignal TrafficSignalValue = 1;	    //信号灯信息（用于TSP）- 内容与TSP数据相同，目的是更新signal_offset
+}
+
+//*********************************************************************************************************************
+
+//地图处理结果(MapResult)
+message MapResult{
+	//地图处理结果
+	int64 from_node_id = 1;							    //起始节点
+	int64 to_node_id = 2;							    //终止节点
+	double dis_to_end = 3;							    //路段据终点距离
+	SpeedLimitResult link_limit = 4;		            //路段限	速	
+	int32 lane_id = 5;								    //车道ID
+	SpeedLimitResult lane_limit = 6;		            //车道限速		
+    double lane_to_end = 7;                             //车道距终点距离
+    int32 lane_type = 8;                                //车道类型
+    int32 lane_attribute = 9;                           //车道属性
+}
+
+//*********************************************************************************************************************
+
+//RTS处理结果(RtsResult)
+message RtsResult{
+	message RtsResultInformation{
+		int32 type = 1;								    //RTS类型
+		bytes description = 2;						    //RTS描述
+		double dis_to_end = 3;						    //RTS结束距离
+		double rdis_to_path = 4;					    //到RTS距离
+		int64 upper_node_id = 5;					    //上游节点ID
+		int64 down_node_id = 6;						    //下游节点ID
+		int32 rts_id = 7;							    //RTS编号
+		bytes rsu_id = 8;                               //RSU ID
+	}
+	repeated RtsResultInformation RtsResults = 1;       //道路交通标志处理结果信息
+}
+
+//*********************************************************************************************************************
+
+//RTE处理结果(RteResult)
+message RteResult{
+	message RteResultInformation{
+		int32 type = 1;								    //RTE类型
+		int32 source = 2;							    //RTE源
+		bytes description = 3;						    //RTE描述
+		double dis_to_end = 4;						    //RTE结束距离
+		double rdis_to_path = 5;					    //到RTE距离
+		int64 upper_node_id = 6;					    //上游节点ID
+		int64 down_node_id = 7;						    //下游节点ID
+		int32 rte_id = 8;							    //RTE编号
+		bytes rsu_id = 9;                               //RSU ID
+	}
+	repeated RteResultInformation RteResults = 1;       //道路交通事件处理结果信息
+}
+
+//*********************************************************************************************************************
+
+//信号灯信息处理结果(TrafficLightResult)
+message TrafficLightResult{
+	message TrafficLightResultInformation{
+		float turner_angle = 1;						    //转弯角度
+		int32 direction = 2;						    //信号灯方向
+		int32 light_state = 3;						    //信号灯状态
+		int32 time_remaining = 4;					    //剩余时间
+		SpeedLimitResult link_limit = 5;		        //LINK建议车速
+		SpeedLimitResult lane_limit = 6;		        //LANE建议车速
+		int64 direction_node_id = 7;				    //运动方向节点		
+		int32 phase_id	= 8;						    //相位ID		
+		double decel_red_break = 9;					    //红绿灯减速预警
+	}
+	repeated TrafficLightResultInformation TrafficLightResults = 1; //信号灯处理结果信息
+}
+
+//*********************************************************************************************************************
+
+//车路预警(CDAS Alert)
+message CdasAlert{
+	repeated TargetInfo target_list = 1;            //目标列表
+}
+
+//预警目标信息(Target Info)
+message TargetInfo{
+	int32 target_type = 1;                          //目标类型
+	bytes device_id = 2;                            //目标设备ID
+	GnssInfo gnss = 3;                              //GNSS信息
+	VehicleInfo veh_info = 4;                       //车辆基本信息
+	LogicMapResult lm_res = 5;                      //逻辑地图分析结果
+	PathHistroyResult ph_res = 6;                   //历史路径分析结果
+	PathPredictResult pp_res = 7;                   //预测路径分析结果
+	PositionResult pos_res = 8;                     //位置分析结果
+	TargetDirectionDesc td_res = 9;                 //目标方位描述
+	TargetWarnDesc tw_res = 10;                     //目标预警描述
+}
+
+//逻辑地图分析结果(Logic Map Result)
+message LogicMapResult{
+	oneof result
+	{
+		SameDirectionLink same_link = 1;             //同向道路结果
+		OppositeDirectionLink opposite = 2;          //反向道路结果
+		ApproachIntersection intersection = 3;       //驶入交叉路口结果
+	}
+}
+
+//同向道路结果(Same Direction Link)
+message SameDirectionLink{
+	int64 from_node = 1;                             //上游node id
+	int64 to_node = 2;                               //下游node id
+	bool lane_info = 3;                              //车道信息
+	int32 lane_num = 4;                              //车道间隔数
+	float lon_dis = 5;                               //路网纵向距离
+	float lat_dis = 6;                               //路网横向距离
+}
+
+//反向道路结果(Opposite Direction Link)
+message OppositeDirectionLink{
+	int64 from_node = 1;                             //上游node id
+	int64 to_node = 2;                               //下游node id
+	bool lane_info = 3;                              //车道信息
+	int32 lane_num = 4;                              //车道间隔数
+	float lon_dis = 5;                               //路网纵向距离
+	float lat_dis = 6;                               //路网横向距离
+}
+
+//驶入交叉路口结果(Approach Intersection)
+message ApproachIntersection{
+	int64 from_node = 1;	                         //上游node id
+	int64 to_node = 2;	                             //下游node id
+	int64 remote_node = 3;                           //远端node id
+	float hv_dis = 4;	                             //主车至路口距离
+	float rv_dis = 5;	                             //远车至路口距离
+}
+
+//历史路径分析结果(Path Histroy Result)
+message PathHistroyResult{
+	int32 type = 1;                                  //相对位置类型
+	float lon_dis = 2;                               //历史纵向距离
+	float lat_dis = 3;                               //历史横向距离
+	float head_diff = 4;                             //历史路径角度差
+	float time_dis = 5;                              //车头时距
+}
+
+//预测路径分析结果(Path Predict Result)
+message PathPredictResult{
+	int32 type = 1;                                  //相对位置类型
+	float lon_dis = 2;                               //预测纵向距离
+	float lat_dis = 3;                               //预测横向距离
+	float hv_node_dis = 4;                           //主车至交叉点距离
+	float rv_node_dis = 5;                           //远车至交叉点距离
+	float head_diff = 6;                             //预测路径角度差
+	float time_dis = 7;                              //车头时距
+	float node_time_dis = 8;                         //交叉点时间差
+	int32 confidence = 9;                            //置信度
+}
+
+//位置分析结果(Position Result)
+message PositionResult{
+	float angle = 1;                                 //车辆角度差
+	float distance = 2;                              //两车直线距离
+	float lon_dis = 3;                               //两车纵向距离
+	float lat_dis = 4;                               //两车横向距离
+	float dir_diff = 5;                              //行驶方向角度差
+	float hv_node_dis = 7;                           //主车至交叉点距离
+	float rv_node_dis = 8;                           //远车至交叉点距离
+	int32 confidence = 9;                            //置信度
+}
+
+//目标方位描述(Target Direction Desc)
+message TargetDirectionDesc{
+	int32 direction = 1;                             //目标方位
+	int32 confidence = 2;                            //置信度
+}
+
+//目标预警描述(Target Warn Desc)
+message TargetWarnDesc{
+	repeated TargetWarnInfo tw_info = 1;             //预警目标列表
+}
+
+//目标预警信息(Target Warn Info)
+message TargetWarnInfo{
+	oneof choice
+	{
+		FCWInfoDesc fcw = 1;                         //前向碰撞预警
+		ICWInfoDesc icw = 2;                         //交叉口碰撞预警
+		CLWInfoDesc clw = 3;                         //失控车辆预警
+		AVWInfoDesc avw = 4;                         //异常车辆预警
+		EBWInfoDesc ebw = 5;                         //紧急刹车预警
+		DNPWInfoDesc dnpw = 6;                       //逆向超车预警
+		LCWInfoDesc lcw = 7;                         //变道预警
+		LTAInfoDesc lta = 8;                         //左转辅助预警
+		EVWInfoDesc evw = 9;                         //紧急车辆预警
+		FVWInfoDesc fvw = 10;                        //跟车预警
+		BSWInfoDesc bsw = 11;                        //盲区预警
+		SLWInfoDesc slw = 12;                        //限速预警
+		RLVWInfoDesc rlvw = 13;                      //闯红灯预警
+	}
+}
+
+//前向碰撞预警 (FCW Info Desc)
+message FCWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float h_time = 3;                               //车头时距
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//交叉口碰撞预警(ICW Info Desc)
+message ICWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float d_time = 3;                               //错车时间
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//失控车辆预警(CLW Info Desc)
+message CLWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float h_time = 3;                               //车头时距
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//异常车辆预警(AVW Info Desc)
+message AVWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float h_time = 3;                               //车头时距
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//紧急刹车预警(EBW Info Desc)
+message EBWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float h_time = 3;                               //车头时距
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//逆向超车预警(DNPW Info Desc)
+message DNPWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	int32 subtype = 3;                              //场景子类型
+	int32 level = 4;                                //预警等级
+}
+
+//变道预警(LCW Info Desc)
+message LCWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float h_time = 3;                               //车头时距
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//左转辅助预警(LTA Info Desc)
+message LTAInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float d_time = 2;                               //错车时间
+	int32 subtype = 3;                              //场景子类型
+	int32 level = 4;                                //预警等级
+}
+
+//紧急车辆预警(EVW Info Desc)
+message EVWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float h_time = 3;                               //车头时距
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//跟车预警(FVW Info Desc)
+message FVWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float h_time = 2;                               //车头时距
+	int32 subtype = 3;                              //场景子类型
+	int32 level = 4;                                //预警等级
+}
+
+//盲区预警(BSW Info Desc)
+message BSWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float c_time = 2;                               //碰撞时间
+	float h_time = 3;                               //车头时距
+	int32 subtype = 4;                              //场景子类型
+	int32 level = 5;                                //预警等级
+}
+
+//限速预警(SLW Info Desc)
+message SLWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	int32 sl_number = 2;                            //限速值
+	int32 level = 3;                                //预警等级
+}
+
+//闯红灯预警(RLVW Info Desc)
+message RLVWInfoDesc{
+	int32 confidence = 1;                           //置信度
+	float distance_to_end = 2;                      //停止线距离
+	int32 level = 3;                                //预警等级
+}
+//*********************************************************************************************************************
+
+//车辆意图和请求(VIR)
+message VIR{
+    repeated VirInfo virs = 1;                          //请求信息
+}
+
+//车辆意图和请求信息(VIRInfo)
+message VirInfo{
+    bytes device_id = 1;                                //设备ID
+    int64 time = 2;                                     //时间戳
+    DriveBehaviorInfo behavior_info = 3;                //驾驶行为
+    PathPointInfo path_point = 4;                       //路径点信息
+    repeated PathPointInfo plan_points = 5;             //计划路径点
+    repeated RequestInfo request_info = 6;              //请求信息
+}
+
+//驾驶行为信息(DriveBehaviorInfo)
+message DriveBehaviorInfo{
+    int32 behavior = 1;	                                //驾驶行为
+}
+
+//车辆请求信息(Request Info)
+message RequestInfo{
+	int32 request_id = 1;                               //请求ID
+	int32 request_status = 2;                           //请求状态
+	int32 request_priority = 3;                         //请求优先级
+	bytes obu_device = 4;                               //OBU设备ID
+	bytes rsu_device = 5;                               //RSU设备ID
+	int64 life_time = 6;                                //有效时间截止
+	LaneChangeInfo lane_change = 7;                     //协作变道请求
+	ClearWayInfo clear_way = 8;                         //清空路段请求
+	SignalPriorityInfo signal_priority = 9;             //优先通行请求
+	SenseShareingInfo sense_share = 10;                 //感知共享请求
+	ParkingInfo parking = 11;                           //停车请求
+}
+
+//协作变道请求信息(LaneChangeInfo)
+message LaneChangeInfo{
+	int64 upper_node_id = 1;                            //上游节点ID
+	int64 down_node_id = 2;                             //下游节点ID
+	int32 change_lane = 3;                              //变换车道ID
+}
+
+//清空路段请求信息(ClearWayInfo)
+message ClearWayInfo{
+    int64 upper_node_id = 1;                            //上游节点ID
+    int64 down_node_id = 2;                             //下游节点ID
+    int32 clear_lane = 3;                               //清空车道ID
+    int64 start_time = 4;                               //清空开始时间
+    int64 end_time = 5;                                 //清空结束时间
+    RelatePathInfo path = 6;                            //关联路径信息 
+}
+
+//优先通行请求信息(SignalPriorityInfo)
+message SignalPriorityInfo{
+    int64 upper_node_id = 1;                            //上游节点ID
+    int64 down_node_id = 2;                             //下游节点ID
+    int32 phase_id = 3;                                 //相位ID
+    int32 maneuver = 4;                                 //请求意图
+    int64 arrive_time = 5;                              //到达时间
+    float distance = 6;                                 //到达距离
+}
+
+//感知共享请求信息(SenseShareingInfo)
+message SenseShareingInfo{
+    repeated RelatePathInfo paths = 1;                  //共享路径信息
+}
+
+//停车请求信息(ParkingInfo)
+message ParkingInfo{
+    int32 vehicle_class = 1;                            //车辆类型
+    int32 fuel_type = 2;                                //动力类型
+    int32 parking_req = 3;                              //停车请求
+    int32 parking_type = 4;                             //停车类型
+    int32 slot_id = 5;                                  //停车点ID
+}
+
+//*********************************************************************************************************************
+
+//感知共享信息(SsmInfo)
+message SsmInfo{
+    repeated PolygonInfo polygons = 1;                  //共享多边形区域
+    repeated DetectPtcInfo detect_ptcs = 2;             //共享交通参与者
+    repeated ObstacleInfo obstacles = 3;                //共享障碍物
+    repeated RteData detect_rte = 4;                    //共享交通事件
+}
+
+//多边形区域信息(PolygonInfo)
+message PolygonInfo{
+    repeated PointSiteInfo points = 1;                  //共享多边形区域
+}
+
+//交通参与者信息(DetectPtcInfo)
+message DetectPtcInfo{
+    PtcDescInfo ptcs = 1;                               //交通参与者描述
+    int32 source_type = 2;                              //数据源设备类型
+    int32 status_druing = 3;                            //状态保持时间
+    int32 tracking = 4;                                 //追踪参与者时长
+    repeated PointSiteInfo polygons = 5;                //模型范围点集
+}
+
+//交通参与者描述信息(PtcDescInfo)
+message PtcDescInfo{
+    PtvInfomation ptv = 1;                              //机动车	
+    PnvInfomation pnv = 2;                              //非机动车
+}
+
+//障碍物信息(ObstacleInfo)
+message ObstacleInfo{
+	int32 type = 1;                                     //障碍物类型	
+	int32 id = 2;                                       //障碍物ID	
+	int32 source_type = 3;                              //来源类型	
+	double longitude = 4;                               //经度	
+	double latitude = 5;                                //纬度	
+	double altitude = 6;                                //海拔	
+	float speed = 7;                                    //速度	
+	float heading = 8;                                  //方向	
+	float verspeed = 9;                                 //垂直速度	
+	float length = 10;                                  //长	
+	float width = 11;                                   //宽	
+	float height = 12;                                  //高	
+	float acc4way_lon = 13;                             //纵向加速度	
+	float acc4way_lat = 14;                             //横向加速度	
+	float acc4way_vert = 15;                            //垂直加速度	
+	float acc4way_yaw = 16;                             //角加速度	
+	int64 time = 17;                                    //时间戳	
+	int32 tracking_time = 18;                           //追踪障碍物时长	
+	repeated PointSiteInfo polygons = 19;               //模型范围点集	
+}
+
+//*********************************************************************************************************************
+
+//路测协调信息(RscInfo)
+message RscInfo{
+    bytes source_id = 1;                                //源设备ID	
+    int64 time = 2;                                     //时间戳	
+    double rsc_longitude = 3;                           //经度	
+    double rsc_latitude = 4;                            //纬度	
+    double rsc_altitude = 5;                            //海拔	
+    repeated VehicleCoordination veh_coordination = 6;  //单车引导信息	
+    repeated LaneCoordination lane_coordination = 7;    //车道引导信息	
+}
+
+//单车引导信息(VehicleCoordination)
+message VehicleCoordination{
+    bytes device_id = 1;                                //目标设备ID	
+    DriveSuggestion suggest = 2;                        //引导驾驶	
+    repeated PathPointInfo points = 3;                  //引导路径点	
+    int32 info = 4;                                     //补充信息	
+}
+
+//引导驾驶信息(DriveSuggestion)
+message DriveSuggestion{
+    int32 behavior = 1;                                 //驾驶行为
+    int64 time = 2;                                     //时间周期
+    RelatePathInfo path = 3;                            //关联路径
+    RelateLinkInfo link = 4;                            //关联路段
+}
+
+//车道引导信息(LaneCoordination)
+message LaneCoordination{
+    RelatePathInfo path = 1;                            //关联路径
+    RelateLinkInfo link = 2;                            //关联路段
+    int64 start_time = 3;                               //开始时间
+    int64 end_time = 4;                                 //结束时间
+    float speed = 5;                                    //引导速度
+    int32 behavior = 6;                                 //驾驶行为
+    int32 info = 7;                                     //补充信息
+    bytes description = 8;                              //引导描述
+}
+
+//*********************************************************************************************************************
+
+//交通协作结果(CoordinationResult)
+message CoordinationResult{
+    oneof choice
+    {
+        LaneChangeResult lane_Change = 1;                //协作变道结果
+        ClearTheWayResult clear_the_way = 2;             //清空路段结果
+        SensorSharingResult sensor_sharing = 3;          //感知共享结果
+        InterSectionPassResult intersection_pass = 4;    //交叉路口通行结果
+        RampInResult ramp_in = 5;                        //匝道汇入结果
+    }
+}
+
+//目标车辆(TargetVehicle)
+message TargetVehicle{
+	bytes device_id = 1;				                 //车辆标识
+	int32 relative_pos = 2;                              //相对位置类型
+    DriveBehaviorInfo behavior_info = 3;                 //驾驶行为
+}
+
+//目标路段(TargetLaneInfo)
+message TargetLaneInfo{
+    int64 upper_node_id = 1;                             //上游节点ID
+    int64 down_node_id = 2;                              //下游节点ID
+	int32 lane_id = 3;                                   //车道ID
+	repeated TimeRange time_range = 4;                   //有效时间范围
+}
+
+//协作驾驶建议(CoordinationDriveSuggestion)
+message CoordinationDriveSuggestion{
+	SpeedLimitResult speed_guide = 1;                    //限制速度区间
+    DriveBehaviorInfo behavior_suggest = 2;              //建议驾驶行为
+	int64 time_line = 3;                                 //有效时间节点
+}
+
+//协作变道结果(LaneChangeResult)
+message LaneChangeResult{
+    int32 role = 1;                                      //本车身份类型
+    TargetLaneInfo target_lane = 2;                      //目标车道信息
+    CoordinationDriveSuggestion suggestion = 3;          //本车驾驶建议
+    repeated TargetVehicle veh_list = 4;                 //协作相关车辆
+}
+
+//清空路段结果(ClearTheWayResult)
+message ClearTheWayResult{
+    int32 role = 1;                                      //本车身份类型
+    TargetLaneInfo target_lane = 2;                      //目标车道信息
+    CoordinationDriveSuggestion suggestion = 3;          //本车驾驶建议
+}
+
+//感知共享结果(SensorSharingResult)
+message SensorSharingResult{
+    int32 role = 1;                                      //本车身份类型
+    repeated TargetVehicle veh_list = 2;                 //协作相关车辆
+}
+
+//交叉路口通行结果(InterSectionPassResult)
+message InterSectionPassResult{
+    int32 type = 1;                                      //交叉路口类型
+    TargetLaneInfo target_lane = 2;                      //目标车道信息
+    CoordinationDriveSuggestion suggestion = 3;          //本车驾驶建议
+	repeated TargetLaneInfo current_lane = 4;            //本车所在车道
+}
+
+//匝道汇入结果(RampInResult)
+message RampInResult{
+	int32 role = 1;                                      //本车身份类型
+    CoordinationDriveSuggestion suggestion = 2;          //本车驾驶建议
+}
+
+//*********************************************************************************************************************
+
+//配置信息(Configuration)
+message Configuration{
+	message ConfigurationInformation{		
+		bytes config_name = 1;						    //配置信息名称
+		int32 config_type = 2;						    //配置信息类型
+		int32 config_value_int = 3;					    //配置信息内容int
+		bytes config_value_string = 4;				    //配置信息内容string
+		double config_value_double = 5;				    //配置信息内容double
+		int32 key_length = 6;						    //配置名称长度
+		int32 value_length = 7;						    //配置内容长度
+	}
+	repeated ConfigurationInformation Configurations = 1; //配置单元信息
+}
+
+//*********************************************************************************************************************
+
+//二阶段配置信息(ConfigurationDAYII)
+message ConfigurationDayii{
+    repeated SimpleRequest simple_req = 1;		        //简易请求信息
+    ClearWayRequest clearway_req = 2;		            //清理道路请求
+    SensorShareingRequest sensorshare_req = 3;		    //感知共享请求
+    ParkingRequest parking_req = 4;		                //停车请求
+}
+
+//简易请求信息(SimpleRequest)
+message SimpleRequest{
+    uint32 request_type = 1;		                    //请求类型
+    uint32 request_status = 2;		                    //请求状态
+}
+
+//清理道路请求(ClearWayRequest)
+message ClearWayRequest{
+    float length = 1;		                            //清理距离
+    uint32 duration = 2;		                        //清理时长
+}
+
+//感知共享请求(SensorShareingRequest)
+message SensorShareingRequest{
+    uint32 lane_id = 1;                                 //共享车道ID
+    uint32 length = 2;                                  //共享车道长度
+    float radius = 3;                                   //共享范围半径 
+}
+
+//停车请求(ParkingRequest)	
+message ParkingRequest{
+    uint32 request_type = 1;                            //请求类型
+    uint32 parking_type = 2;                            //停车类型
+    uint32 slot_id = 3;                                 //停车点ID 
+}
+

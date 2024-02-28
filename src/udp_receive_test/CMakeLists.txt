@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  roslib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -119,6 +120,8 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/include
+  # ${PROJECT_SOURCE_DIR}/include/
+  ${PROJECT_SOURCE_DIR}/proto_file
 )
 
 ## Declare a C++ library
@@ -139,7 +142,10 @@ include_directories(
 
 
 FILE(GLOB DIR ${PROJECT_SOURCE_DIR}/src/*.cpp 
-    ${PROJECT_SOURCE_DIR}/src/udp_receive_from_rsu_server/*.cpp)
+    ${PROJECT_SOURCE_DIR}/src/udp_receive_from_rsu_server/*.cpp
+    ${PROJECT_SOURCE_DIR}/proto_file/*.cc
+    ${PROJECT_SOURCE_DIR}/src/obu_connect/*.cpp
+    )
 
 add_executable(${PROJECT_NAME}_node ${DIR})
 
@@ -154,8 +160,15 @@ add_executable(${PROJECT_NAME}_node ${DIR})
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+
+
+SET(PROTOBUF_DIR  /usr/local/lib/)
+
+
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  protobuf
+  pthread
 )
 
 

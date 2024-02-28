@@ -1,9 +1,15 @@
 #include <iostream>
 #include <string>
-#include "test_protobuf.pb.h"
 
+#include <stdlib.h>
+
+#include "test_protobuf.pb.h"
+#include <unistd.h>
 #include "nebulalink_perceptron.pb.h"
 #include <ros/ros.h>
+#include <ros/package.h>
+// #include <std_msgs/String.h>
+
 
 #include "udp_send_to_rsu_client/udp_connect_rsu.h"
 #include "udp_send_to_rsu_client/rsu_data_serialize.h"
@@ -31,7 +37,19 @@ int main(int argc, char **argv)
 
     UDP_RSU *udp_rsu = new UDP_RSU();
 
-    unsigned char sendPointData[128] = {0};
+    std::string cwd = ros::package::getPath("proto_ros_send");
+    std::string inifile_path = cwd + "/config/send_config.ini";
+
+    udp_rsu->strLocalIP = udp_rsu->getValueFromIni(inifile_path, "LocalSet", "LocalIP");
+    udp_rsu->nLocalPort = std::atoi(udp_rsu->getValueFromIni(inifile_path, "LocalSet", "LocalPort").c_str());
+
+    udp_rsu->strIP = udp_rsu->getValueFromIni(inifile_path, "UdpMsgSend", "DstIP");
+    udp_rsu->nPort = std::atoi(udp_rsu->getValueFromIni(inifile_path, "UdpMsgSend", "DstPort").c_str());
+
+    std::cout << "****************************************************" << std::endl;
+    std::cout << "本地ip:" <<  udp_rsu->strLocalIP << "本地端口号:" << udp_rsu->nLocalPort << std::endl;
+    std::cout << "目标ip:" << udp_rsu->strIP << "目标端口号:" << udp_rsu->nPort << std::endl;
+    std::cout << "****************************************************" << std::endl;
 
     unsigned char send_buf[C_MAX_PACK_SIZE] = {0};
     char serialize_buf[C_MAX_PACK_SIZE] = {0};
@@ -49,8 +67,10 @@ int main(int argc, char **argv)
 
 
 
+
+
     ros::Rate loop_rate(10);
-    while (ros::ok())
+    while (1)
     {
         //1.填充自定义结构体
         rsu_data_proto.GeneratePerceptronSetStruct(perceptronset_struct);

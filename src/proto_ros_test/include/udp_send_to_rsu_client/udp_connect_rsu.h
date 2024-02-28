@@ -20,7 +20,7 @@ class UDP_RSU
 public:
     UDP_RSU();
     void recvData();
-
+    std::string getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key);
     int sock_fd;
 
     struct sockaddr_in dst_addr;

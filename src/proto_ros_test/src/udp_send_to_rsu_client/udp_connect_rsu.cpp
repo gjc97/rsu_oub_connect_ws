@@ -1,11 +1,10 @@
+#include <fstream>
+
 #include "udp_send_to_rsu_client/udp_connect_rsu.h"
-
-
 
 UDP_RSU::UDP_RSU()
 {
 
-    
     perception_type.insert(std::pair<std::string, unsigned char>("unknown", 0x00));
     perception_type.insert(std::pair<std::string, unsigned char>("rsu_self", 0x01));
     perception_type.insert(std::pair<std::string, unsigned char>("v2x_broadcast", 0x02));
@@ -65,4 +64,34 @@ void UDP_RSU::recvData()
     
     }
 }
+
+
+std::string UDP_RSU::getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key) 
+{
+    std::ifstream file(filePath);
+    std::string line;
+    std::string value;
+    bool sectionFound = false;
+
+    while (std::getline(file, line))
+    {
+        if (!sectionFound && line == "[" + section + "]")
+        {
+            sectionFound = true;
+        }
+        else if (sectionFound)
+        {
+            size_t found = line.find(key);
+            if (found != std::string::npos)
+            {
+                size_t equalsPos = line.find("=");
+                value = line.substr(equalsPos + 1);
+                break;
+            }
+        }
+    }
+
+    return value;
+}
+
 

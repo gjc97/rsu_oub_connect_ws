@@ -4,6 +4,6 @@
 
 #include <ros/ros.h>
 
-#include "udp_receive_from_rsu_server/udp_receive_test.h"
+
 
 #endif
