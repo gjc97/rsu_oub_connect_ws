@@ -23,6 +23,7 @@
 
 
 std::string getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key);
+void SetConfig(std::string input_str);
 int ClientInit(void);
 int CloseClient(void);
 int NewThread(void* (*func)(void*), void* args);

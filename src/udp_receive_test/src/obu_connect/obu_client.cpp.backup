@@ -24,48 +24,62 @@ unsigned short tcp_port = 5050;
 // unsigned short tcp_port = 10086;
 
 
+// std::cout << "****************************************************" << std::endl;
+// std::cout << "ip地址:" << tcp_ip << "本地端口号:" << tcp_port << std::endl;
+// std::cout << "****************************************************" << std::endl;
 
 
 
 
-std::string getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key) 
+
+
+OBU_CLIENT::OBU_CLIENT()
 {
-    std::ifstream file(filePath);
-    std::string line;
-    std::string value;
-    bool sectionFound = false;
 
-    while (std::getline(file, line))
+}
+
+
+
+
+int OBU_CLIENT::NewThread(void* (*func)(void*), void* args)
+{
+    pthread_t tid = 0;
+
+    int ret = pthread_create(&tid, NULL, func, args);//参数：创建的线程id，线程参数，线程运行函数的起始地址，运行函数的参数
+    if( ret == 0 ) //创建线程成功返回0
     {
-        if (!sectionFound && line == "[" + section + "]")
-        {
-            sectionFound = true;
-        }
-        else if (sectionFound)
-        {
-            size_t found = line.find(key);
-            if (found != std::string::npos)
-            {
-                size_t equalsPos = line.find("=");
-                value = line.substr(equalsPos + 1);
-                break;
-            }
-        }
+        printf("pthread_create successfully...\n");
+
+        usleep(50000);
+    }
+    else
+    {
+        printf("pthread_create failed...\n");
+        return -1;
     }
 
-    return value;
+    pthread_detach(tid);
+
+    return 0;
 }
 
-void SetConfig(std::string input_str)
+int OBU_CLIENT::CreateThread()
 {
-	tcp_ip = getValueFromIni(input_str, "ClientSet", "ClientIP");
-	tcp_port = std::atoi(getValueFromIni(input_str, "ClientSet", "ClientPort").c_str());
-	std::cout << "****************************************************" << std::endl;
-	std::cout << "ip地址:" << tcp_ip << "本地端口号:" << tcp_port << std::endl;
-	std::cout << "****************************************************" << std::endl;
+	if (ClientInit() < 0)
+	{
+		printf("ClientInit failed...\n");
+		return -1;
+	}
+
+	if (NewThread(CreateRecvThread, NULL) == -1)
+	{
+		printf("CreateRecvThread pthread_create failed...\n");
+		return -1;
+	}
 }
 
-int ClientInit(void)
+
+int OBU_CLIENT::ClientInit(void)
 {
 	CloseClient();
 
@@ -99,38 +113,34 @@ int ClientInit(void)
     return 1;
 }
 
-int CloseClient()
+std::string OBU_CLIENT::getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key) 
 {
-    if(socket_fd_ > 0)
+    std::ifstream file(filePath);
+    std::string line;
+    std::string value;
+    bool sectionFound = false;
+
+    while (std::getline(file, line))
     {
-        close(socket_fd_);
-        socket_fd_ = -1;
+        if (!sectionFound && line == "[" + section + "]")
+        {
+            sectionFound = true;
+        }
+        else if (sectionFound)
+        {
+            size_t found = line.find(key);
+            if (found != std::string::npos)
+            {
+                size_t equalsPos = line.find("=");
+                value = line.substr(equalsPos + 1);
+                break;
+            }
+        }
     }
 
-    return 1;
+    return value;
 }
-int NewThread(void* (*func)(void*), void* args)
-{
-    pthread_t tid = 0;
-
-    int ret = pthread_create(&tid, NULL, func, args);//参数：创建的线程id，线程参数，线程运行函数的起始地址，运行函数的参数
-    if( ret == 0 ) //创建线程成功返回0
-    {
-        printf("pthread_create successfully...\n");
-
-        usleep(50000);
-    }
-    else
-    {
-        printf("pthread_create failed...\n");
-        return -1;
-    }
-
-    pthread_detach(tid);
-
-    return 0;
-}
-void* CreateRecvThread(void*args)
+void* OBU_CLIENT::CreateRecvThread(void*args)
 {
     unsigned char recv_buf[C_MAX_PACK_SIZE] = {0};
     int recv_len = 0;
@@ -157,7 +167,8 @@ void* CreateRecvThread(void*args)
     return 0;
 }
 
-int RegisterFrame(void)
+
+int OBU_CLIENT::RegisterFrame(void)
 {
     char register_buf[256] = {0};
     int reg_len = 0;
@@ -167,14 +178,12 @@ int RegisterFrame(void)
     char buf[256] = {0};
     bool recv_flag = false;
 
-	//注册帧
     nebulalink_pro_message::RegisterFrame reg;
     reg.set_element_type(1);
     reg.set_name(client_name,16);
 
 	for(int i = 1; i <= 14; i++)
-	{	
-		//权限设置
+	{
         nebulalink_pro_message::RegisterFrame_SetPermission* per = reg.add_setpermissionvalue();
 		per->set_type(i);		
 		per->set_level(0x01);
@@ -188,33 +197,32 @@ int RegisterFrame(void)
 		per->set_level(0x01);
 		per->set_time_interval(1000000);	
 	}
-	//注册帧序列化
+
 	bool result;
    	result = reg.SerializeToArray(register_buf, 256);
 	reg_len = reg.ByteSize();
 
-	//填充帧结构
+	
     printf("reg_len = %d, result = %s\n",reg_len,result?"true":"false");
     if(reg_len > 0)
     {
-		//帧开始frame_start 4 Bytes
         buf[index++] = 0xFA;
         buf[index++] = 0xFB;
         buf[index++] = 0xFC;
         buf[index++] = 0xFD;
-		//frame_tpye 2
+		
         buf[index++] = 0x00;
         buf[index++] = 0x01;
-		//数据表长度
+		
         buf[index++] = (reg_len>>8) & 0xff;
         buf[index++] = reg_len& 0xff;
-		//数据表数据值
+
 		for(int i = 0; i < reg_len; i++)
 		{
 			buf[index++] = register_buf[i];
 			//printf("s:%x",i);
 		}
-		//帧结束
+
         buf[index++] = 0xEA;
         buf[index++] = 0xEB;
         buf[index++] = 0xEC;
@@ -236,6 +244,22 @@ int RegisterFrame(void)
 
     return 1;
 }
+
+
+int OBU_CLIENT::CloseClient()
+{
+    if(socket_fd_ > 0)
+    {
+        close(socket_fd_);
+        socket_fd_ = -1;
+    }
+
+    return 1;
+}
+
+
+
+
 
 void show_acc4way_Info(nebulalink_pro_message::Acc4wayInfo* acc)
 {
@@ -447,7 +471,8 @@ void show_predic_info(nebulalink_pro_message::PathPrediction* prediction)
 	printf("*********************PredicInfo End*******************\n");
 }
 
-void handle(unsigned char *buf, int len)
+
+void OBU_CLIENT::handle(unsigned char *buf, int len)
 {
     unsigned char data_buf[C_MAX_PACK_SIZE] = {0};
     unsigned short data_len = 0;
@@ -456,43 +481,17 @@ void handle(unsigned char *buf, int len)
 
     if(len > 0)
     {
-		//数据头
+	
         if((buf[index] == 0xFA)&&(buf[index+1] == 0xFB)&&(buf[index+2] == 0xFC)&&(buf[index+3] == 0xFD))
         {
-			//数据帧类型
         	FrameType=	(buf[4])<<8 | buf[5] ;
-			//数据帧长度
 			data_len =	(buf[6])<<8 | buf[7] ;
-			//拷贝数据
 			memcpy(data_buf,buf+8,data_len);
-
             printf("FrameType:0x%04x data_len:%d\n",FrameType,data_len);
-			bool is_show002 = false;
-			bool is_show003 = false;
-			bool is_show004 = false;
-			bool is_show005 = false;
-			bool is_show006 = false;
-			bool is_show007 = false;
-			bool is_show008 = false;
-			bool is_show009 = false;
-			bool is_show00a = false;
-			bool is_show00b = false;
-			bool is_show00c = false;
-			bool is_show00d = false;
-			bool is_show00e = false;
-			bool is_show00f = false;
-			bool is_show021 = false;
-			bool is_show022 = true;
-			bool is_show023 = false;
-			bool is_show024 = false;
-	
-			
             switch(FrameType)
             {
-
 				case 0x0002://自身信息(Host Info)
-				{   
-					if(!is_show002)break;        
+				{           
 					printf("@@@@@@@@@@@@@@@@@@@@@@ HOST INFORMATION @@@@@@@@@@@@@@@@@@@@@@\n");
 					
 					nebulalink_pro_message::HostInfo host;
@@ -552,9 +551,8 @@ void handle(unsigned char *buf, int len)
 				}
                 break;
 				
-				case 0x0003://非自身OBU(Other Obu)，周边所有OBU
+				case 0x0003://非自身OBU(Other Obu)
 				{
-					if(!is_show003)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ OBU INFORMATION @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::OtherObu obus;
 					obus.ParseFromArray(data_buf,data_len);
@@ -604,7 +602,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x0004://非自身RSU(Other Rsu)
 				{
-					if(!is_show004)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RSU INFORMATION @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::OtherRsu rsus;
 					rsus.ParseFromArray(data_buf,data_len);
@@ -628,7 +625,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x0005://路侧交通参与者信息：机动车(PTV)
 				{
-					if(!is_show005)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ PTV INFORMATION @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::PTV ptvs;
 					ptvs.ParseFromArray(data_buf,data_len);
@@ -671,7 +667,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x0006://路侧交通参与者信息：非机动车(PNV)
 				{
-					if(!is_show006)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ PNV INFORMATION @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::PNV pnvs;
 					pnvs.ParseFromArray(data_buf,data_len);
@@ -708,7 +703,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x0007://逻辑地图(Logical Map)
 				{
-					if(!is_show007)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ LOGICAL MAP @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::LogicalMap map;
 					map.ParseFromArray(data_buf,data_len);
@@ -825,7 +819,6 @@ void handle(unsigned char *buf, int len)
 				
 				case 0x0008://道路交通标志信息(RTS)
 				{
-					if(!is_show008)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RTS INFORMATION @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::RTS rts;
 					rts.ParseFromArray(data_buf,data_len);
@@ -876,7 +869,6 @@ void handle(unsigned char *buf, int len)
 				
 				case 0x0009://道路交通事件信息(RTE)
 				{
-					if(!is_show009)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RTE INFORMATION @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::RTE rte;
 					rte.ParseFromArray(data_buf,data_len);
@@ -929,7 +921,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x000a://信号灯信息(Traffic Light)
 				{
-					if(!is_show00a)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ TRAFFIC LIGHT @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::TrafficLight tl;
 					tl.ParseFromArray(data_buf,data_len);
@@ -976,7 +967,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x000b://车路预警(Cdas Alert)
 				{
-					if(!is_show00b)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ CDAS ALERT @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::CdasAlert ca;
 					ca.ParseFromArray(data_buf,data_len);
@@ -1226,7 +1216,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x000c://地图处理结果(Map Result)
 				{
-					if(!is_show00c)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ MAP RESULT @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::MapResult mapres;
 					mapres.ParseFromArray(data_buf,data_len);
@@ -1256,7 +1245,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x000d://RTS处理结果(Rts Result)
 				{
-					if(!is_show00d)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RTS RESULT @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::RtsResult rtsres;
 					rtsres.ParseFromArray(data_buf,data_len);
@@ -1281,7 +1269,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x000e://RTE处理结果(Rte Result)
 				{
-					if(!is_show00e)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RTE RESULT @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::RteResult rteres;
 					rteres.ParseFromArray(data_buf,data_len);
@@ -1306,7 +1293,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x000f://信号灯信息处理结果(Traffic Light Result)
 				{
-					if(!is_show00f)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ TRAFFIC LIGHT RESULT @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::TrafficLightResult tlres;
 					tlres.ParseFromArray(data_buf,data_len);
@@ -1340,9 +1326,8 @@ void handle(unsigned char *buf, int len)
 				}
                 break;
 				
-				case 0x0021://车辆意图和请求(Vir List)//02|01
+				case 0x0021://车辆意图和请求(Vir List)
 				{
-					if(!is_show021)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ VIR LIST  @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::VIR virlist;
 					virlist.ParseFromArray(data_buf,data_len);
@@ -1459,12 +1444,11 @@ void handle(unsigned char *buf, int len)
 
 				case 0x0022://感知共享消息(SSM)
 				{
-					if(!is_show022)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ SSM @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::SsmInfo ssm;
 					ssm.ParseFromArray(data_buf,data_len);
 					
-					printf("polygons size--------------->> %d \n",ssm.polygons_size());//共享多边形区域
+					printf("polygons size--------------->> %d \n",ssm.polygons_size());
 					for(int i = 0; i < ssm.polygons_size(); i++)
 					{
 						printf("polygons num------------------->> %d <<------------\n",i);
@@ -1648,7 +1632,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x0023://路侧协调消息(RSC)
 				{
-					if(!is_show023)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RSC @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::RscInfo rsc;
 					rsc.ParseFromArray(data_buf,data_len);
@@ -1717,7 +1700,6 @@ void handle(unsigned char *buf, int len)
 
 				case 0x0024://二阶段结果集(Day2 Result)
 				{
-					if(!is_show024)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ DAYII RESULT @@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::CoordinationResult result;
 					result.ParseFromArray(data_buf,data_len);
