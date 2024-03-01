@@ -5,14 +5,7 @@
 UDP_RSU::UDP_RSU()
 {
 
-    perception_type.insert(std::pair<std::string, unsigned char>("unknown", 0x00));
-    perception_type.insert(std::pair<std::string, unsigned char>("rsu_self", 0x01));
-    perception_type.insert(std::pair<std::string, unsigned char>("v2x_broadcast", 0x02));
-    perception_type.insert(std::pair<std::string, unsigned char>("camera", 0x03));
-    perception_type.insert(std::pair<std::string, unsigned char>("radar", 0x04));
-    perception_type.insert(std::pair<std::string, unsigned char>("ground", 0x05));
-    perception_type.insert(std::pair<std::string, unsigned char>("lidar", 0x06));
-    perception_type.insert(std::pair<std::string, unsigned char>("mec", 0x07));
+
 	//建立一个数据报类型的UDP套接字  ******************//
 
 	sock_fd = socket(AF_INET, SOCK_DGRAM, 0);

@@ -12,6 +12,15 @@
 RsuDataProto::RsuDataProto()
 {
 
+    perception_type.insert(std::pair<std::string, unsigned char>("unknown", 0x00));
+    perception_type.insert(std::pair<std::string, unsigned char>("rsu_self", 0x01));
+    perception_type.insert(std::pair<std::string, unsigned char>("v2x_broadcast", 0x02));
+    perception_type.insert(std::pair<std::string, unsigned char>("camera", 0x03));
+    perception_type.insert(std::pair<std::string, unsigned char>("radar", 0x04));
+    perception_type.insert(std::pair<std::string, unsigned char>("ground", 0x05));
+    perception_type.insert(std::pair<std::string, unsigned char>("lidar", 0x06));
+    perception_type.insert(std::pair<std::string, unsigned char>("mec", 0x07));
+
 }
 
 
@@ -39,7 +48,7 @@ void RsuDataProto::GetUTC()
 void RsuDataProto::GeneratePerceptronStruct(struct rsu_data_ns::Perceptron &input_perceptron_struct)
 {
 
-    input_perceptron_struct.is_tracker = true;
+    input_perceptron_struct.is_tracker = false;
     input_perceptron_struct.object_confidence = 9.9;
     input_perceptron_struct.lane_id = "2";
     input_perceptron_struct.object_class_type = 1;
@@ -59,9 +68,9 @@ void RsuDataProto::GeneratePerceptronStruct(struct rsu_data_ns::Perceptron &inpu
     input_perceptron_struct.object_WE = 0;
     input_perceptron_struct.is_head_tail = 1;
     input_perceptron_struct.object_heading = 145.9;
-    input_perceptron_struct.obj_time_stamp = this->getMiilsecondTimeStamp(0);
-    input_perceptron_struct.ptc_sourcetype = 0x04;
-    this->getTimeBase(input_perceptron_struct.ptc_time_stamp);
+    input_perceptron_struct.obj_time_stamp = this->getMiilsecondTimeStamp(1);
+    input_perceptron_struct.ptc_sourcetype = (*(perception_type.find("camera"))).second;
+    this->getUTCTimeBase(input_perceptron_struct.ptc_time_stamp);
     input_perceptron_struct.ptc_veh_type = 10;
     input_perceptron_struct.ptc_size_cfd.object_height_cfd = 0.5;
     input_perceptron_struct.ptc_size_cfd.object_length_cfd = 0;
@@ -73,7 +82,8 @@ void RsuDataProto::GeneratePerceptronSetStruct(struct rsu_data_ns::PerceptronSet
 {
     input_perceptronset_struct.devide_id = "test0001";
     input_perceptronset_struct.devide_is_true = true;
-    input_perceptronset_struct.time_stamp = this->getMiilsecondTimeStamp(0);
+    //utc时间ms
+    input_perceptronset_struct.time_stamp = this->getMiilsecondTimeStamp(2);
     input_perceptronset_struct.number_frame = 999;
     input_perceptronset_struct.perception_gps.object_longitude = 112.1234;
     input_perceptronset_struct.perception_gps.object_latitude = 43.1234;
@@ -194,11 +204,11 @@ std::string RsuDataProto::GetCurrentTimeStamp(nebulalink::perceptron3::TimeBase 
  * 
  * @param input_time_base 
  */
-void RsuDataProto::getTimeBase(rsu_data_ns::TimeBase &input_time_base)
+void RsuDataProto::getUTCTimeBase(rsu_data_ns::TimeBase &input_time_base)
 {
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now(); // 获取当前系统时间
     std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);//系统时间转换为纪元时间，
-    struct std::tm* now_tm = std::localtime(&now_time_t);//转换为本地时间结构体
+    struct std::tm* now_tm = std::gmtime(&now_time_t);//转换为本地时间结构体//localtime
     input_time_base.year = (now_tm->tm_year + 1900);
     input_time_base.month = (now_tm->tm_mon);
     input_time_base.day = (now_tm->tm_mday);
@@ -243,6 +253,15 @@ int64 RsuDataProto::getMiilsecondTimeStamp(int return_type = 0)
         miilsecond = ms.count() + now_tm->tm_sec * 1000;
         return miilsecond; 
         break;
+    case 2:
+    {
+        // 将时间点转换为UTC时间（从1970年开始计算）
+        auto utcTimePoint = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+        // 提取UTC时间的ms
+        miilsecond = (utcTimePoint.time_since_epoch()).count();
+        return miilsecond;
+        break;
+    }
     default:
         ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
         return ms.count();
@@ -404,7 +423,7 @@ void RsuDataProto::SerializePointGPS(nebulalink::perceptron3::PointGPS *output_p
      return_obstacles_info.set_object_ns(0);
      return_obstacles_info.set_object_we(0);
      return_obstacles_info.set_object_heading(145.9);
-     return_obstacles_info.set_obj_time_stamp(this->GetTimeStamp(1));
+     return_obstacles_info.set_obj_time_stamp(this->getMiilsecondTimeStamp(1));
      return_obstacles_info.set_ptc_sourcetype(0x04);
      this->SerializeTimeBase(*(return_obstacles_info.mutable_ptc_time_stamp()));
      return_obstacles_info.set_ptc_veh_type(10);
@@ -413,7 +432,7 @@ void RsuDataProto::SerializePointGPS(nebulalink::perceptron3::PointGPS *output_p
      return_obstacles_info.set_lane_type(1);
      this->SerializePoint3(return_obstacles_info.mutable_point3f());
      return return_obstacles_info;
-}
+ }
 
 /**
  * @brief 嵌套消息内容赋值测试
@@ -530,6 +549,36 @@ void RsuDataProto::SerializePerceptron(NP3PERCEPTION *output_msg,
     return;
 }
 
+void RsuDataProto::PrintPerceptron(NP3PERCEPTION input_msg)
+{
+    std::cout << "*****************print perceptron********************" << std::endl;
+
+    std::cout << "is_tracker:" << input_msg.is_tracker() << "\n"
+              << "  object_confidence:" << input_msg.object_confidence() << "\n"
+              << "  lane_id:" << input_msg.lane_id()<< "\n"
+              << "  object_class_type:" << input_msg.object_class_type()<< "\n"
+              << "  object_id:" << input_msg.object_id()<< "\n"
+              << "  object_speed:" << input_msg.object_speed()<< "\n"
+              << "  speed3f_x_y_z:" << input_msg.speed3f().speed_x() << "  " << input_msg.speed3f().speed_y() << "  " << input_msg.speed3f().speed_z()<< "\n"
+              << "  object_acceleration:" << input_msg.object_acceleration()<< "\n"
+              << "  target_size_l_w_h:" << input_msg.target_size().object_length() << "  " << input_msg.target_size().object_width() << "  " << input_msg.target_size().object_height()<< "\n"
+              << "  point_gps_long_lat_ele:" << input_msg.point_gps().object_longitude() << "  " << input_msg.point_gps().object_latitude() << "  " << input_msg.point_gps().object_elevation()<< "\n"
+              << "  object_NS:" << input_msg.object_ns()<< "\n"
+              << "  object_ WE:" << input_msg.object_we()<< "\n"
+              << "  is_head_tail:" << input_msg.is_head_tail()<< "\n"
+              << "  object_heading:" << input_msg.object_heading()<< "\n"
+              << "  obj_time_stamp:" << input_msg.obj_time_stamp()<< "\n"
+              << "  ptc_sourcetype:" << input_msg.ptc_sourcetype()<< "\n"
+              << "  ptc_time_stamp_y_m_d_h_m_s_ms:" << input_msg.ptc_time_stamp().year() << "  "
+              << input_msg.ptc_time_stamp().month() << "  " << input_msg.ptc_time_stamp().day() << "  "
+              << input_msg.ptc_time_stamp().hour() << "  " << input_msg.ptc_time_stamp().min() << "  "
+              << input_msg.ptc_time_stamp().second() <<"  "<< input_msg.ptc_time_stamp().miilsecond()<< "\n"
+              << "  ptc_veh_type:" << input_msg.ptc_veh_type()<< "\n"
+              << "  ptc_size_cfd_l_w_h:" << input_msg.ptc_size_cfd().object_length_cfd() << "  " << input_msg.ptc_size_cfd().object_width_cfd() << "  " << input_msg.ptc_size_cfd().object_height_cfd()
+              << std::endl;
+
+    std::cout << "*****************end print perceptron****************" << std::endl;
+}
 
 void RsuDataProto::SerializePerceptronSet(NP3PERCEPTIONSET &output_msg,
                                        struct rsu_data_ns::PerceptronSet input_msg)
@@ -554,6 +603,29 @@ void RsuDataProto::DeserializePerceptron(char input_serialized_buf,int buf_lengt
     output_percecpron_struct.ptc_time_stamp.miilsecond = temp_perceptron.ParseFromArray(&input_serialized_buf,buf_length);
 
     return;
+}
+
+void RsuDataProto::PrintPerceptronSet(NP3PERCEPTIONSET input_msg)
+{
+
+        std::cout << "*****************************print PerceptronSet *****************************" << std::endl;
+
+        std::cout << "device_id:" << input_msg.devide_id()
+                  << "  devide_is_true:" << input_msg.devide_is_true()
+                  << "  time_stamp:" << input_msg.time_stamp()
+                  << "  number_frame:" << input_msg.number_frame()
+                  << "  PointGps_long_lat_ele" << input_msg.perception_gps().object_longitude() << "  "
+                  << input_msg.perception_gps().object_latitude() << "  " << input_msg.perception_gps().object_elevation()
+                  << std::endl;
+                  for(int i = 0; i<input_msg.perceptron_size();i++)
+                  {
+                    PrintPerceptron(input_msg.perceptron(i));
+                  }
+
+        std::cout << "*************************end print PerceptronSet *****************************" << std::endl;
+
+
+
 }
 
 /**

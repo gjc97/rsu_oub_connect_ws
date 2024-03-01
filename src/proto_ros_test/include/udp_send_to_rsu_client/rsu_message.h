@@ -433,7 +433,7 @@ namespace rsu_data_ns
 	{
 		std::string devide_id;					  // 设备号.
 		bool devide_is_true;					  // 判断设备数据的有效性.
-		int64 time_stamp;						  // 数据帧时间戳
+		int64 time_stamp;						  // 数据帧时间戳.utc时间单位ms
 		int32 number_frame;						  // 帧的序列号
 		PointGPS perception_gps;				  // 感知设备安装位置的GPS信息.
 		Perceptron perceptron;					  // 感知参与者列表

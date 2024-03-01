@@ -15,7 +15,7 @@
 #include "udp_send_to_rsu_client/rsu_data_serialize.h"
 
 
-#define C_MAX_PACK_SIZE  10240
+#define C_MAX_PACK_SIZE  3000
 
 struct TEST
 {
@@ -51,7 +51,10 @@ int main(int argc, char **argv)
     std::cout << "目标ip:" << udp_rsu->strIP << "目标端口号:" << udp_rsu->nPort << std::endl;
     std::cout << "****************************************************" << std::endl;
 
+    unsigned char send_buf[C_MAX_PACK_SIZE] = {0};
+    char serialize_buf[C_MAX_PACK_SIZE] = {0};
 
+    char deserialize_buf[C_MAX_PACK_SIZE] = {0};
 
     RsuDataProto rsu_data_proto;
 
@@ -66,7 +69,7 @@ int main(int argc, char **argv)
 
 
 
-    ros::Rate loop_rate(5);
+    ros::Rate loop_rate(10);
     while (ros::ok())
     {
         //1.填充自定义结构体
@@ -74,8 +77,8 @@ int main(int argc, char **argv)
         perceptronset_data.Clear();//清空对象
         rsu_data_proto.SerializePerceptronSet(perceptronset_data,perceptronset_struct);
   
-        //序列化占用的字节数,提前获取序列化后的数据占用的字节数，提前分配内存，避免多次分配内存
-        int data_length = perceptronset_data.ByteSize();//返回序列化所需要的字节数量;
+        //序列化占用的字节数
+        int data_length = 0;
         //是否序列化成功
         bool is_serialized =  false;
         // test*************************************************
@@ -105,11 +108,7 @@ int main(int argc, char **argv)
         }
         //test******************************************************
 
-        unsigned char send_buf[8+data_length] = {0};
-        char serialize_buf[data_length] = {0};
-        char deserialize_buf[data_length] = {0};
-
-        if (!(perceptronset_data.SerializeToArray(&serialize_buf,data_length)))
+        if (!(perceptronset_data.SerializeToArray(&serialize_buf,C_MAX_PACK_SIZE)))
         {
             std::cout << "perceptronset_data序列化失败!" << std::endl;
             is_serialized = false;
@@ -118,7 +117,7 @@ int main(int argc, char **argv)
         else
         {
             is_serialized = true;
-            
+            data_length = perceptronset_data.ByteSize();//返回序列化所需要的字节数量
             std::cout << "perceptron_data序列化成功,占用字节为:" << data_length << std::endl;
         }
         NP3PERCEPTIONSET de_perceptronset_info;
@@ -128,49 +127,59 @@ int main(int argc, char **argv)
         }
         else
         {
-            rsu_data_proto.PrintPerceptronSet(de_perceptronset_info);
+            std::cerr << "de_perceptronset_info反序列化成功" << std::endl;
+            std::cout << "de_perceptronset_info->set_is_tracker:" << de_perceptronset_info.time_stamp()
+            <<  " de_perceptronset_info->perceptron->obj_time_stamp:" << 
+            de_perceptronset_info.perceptron(de_perceptronset_info.perceptron_size() - 1).obj_time_stamp() <<std::endl;
         }
-
+        std::vector<unsigned> buf_v;
         // 填充udp发送的buf
         int buf_index = 0;
-        if (!is_serialized)
+        if (is_serialized)
         {
-            std::cout << "serializ fault!!!!!!!!!!!!!!!" << std::endl;
-            close(udp_rsu->sock_fd);
+            buf_v.push_back(0xDA);
+            buf_v.push_back(0xDB);
+            buf_v.push_back(0xDC);
+            buf_v.push_back(0xDD);
+
+            buf_v.push_back(0x01);
+
+            buf_v.push_back((*(udp_rsu->perception_type.find("camera"))).second);
+
+            buf_v.push_back((0 >> 8) & 0xff);
+            buf_v.push_back(0 & 0xff);
+
+            send_buf[buf_index++] = 0xDA;
+            send_buf[buf_index++] = 0xDB;
+            send_buf[buf_index++] = 0xDC;
+            send_buf[buf_index++] = 0xDD;
+
+            send_buf[buf_index++] = 0x01;
+            send_buf[buf_index++] = (*(udp_rsu->perception_type.find("camera"))).second;
+            send_buf[buf_index++] = (0 >> 8) & 0xff;
+            send_buf[buf_index++] = 0 & 0xff;
+
+            for (int i = 0; i < 0; i++)
+            {
+                buf_v.push_back(serialize_buf[i]);
+            }
+        }
+        
+
+        std::cout << "length: " << buf_v.size() -1 << "char_lenght:" << sizeof(send_buf)<< std::endl;
+
+        int send_lenght = sendto(udp_rsu->sock_fd, (char*)buf_v.data(), 8, 0, (sockaddr *)&(udp_rsu->dst_addr), sizeof(udp_rsu->dst_addr));
+
+        if (send_lenght == -1)
+        {
+            std::cout << "send fault!!!!!!!!" << std::endl; // 若发送失败。则返回-1
             return -1;
         }
-        send_buf[buf_index++] = 0xDA;
-        send_buf[buf_index++] = 0xDB;
-        send_buf[buf_index++] = 0xDC;
-        send_buf[buf_index++] = 0xDD;
-
-        send_buf[buf_index++] = 0x01;
-        send_buf[buf_index++] = (*(rsu_data_proto.perception_type.find("camera"))).second;
-        send_buf[buf_index++] = (data_length >> 8) & 0xff;
-        send_buf[buf_index++] = data_length & 0xff;
-
-        // 使用memecpy代替for循环
-        //  for (int i = 0; i < data_length; i++)
-        //  {
-        //      send_buf[buf_index++] = serialize_buf[i];
-        //  }
-        memcpy(&send_buf[8], serialize_buf, data_length);
-        if (std::atoi(udp_rsu->getValueFromIni(inifile_path, "SendConfig", "IsSend").c_str()))
+        else
         {
-            int send_lenght = sendto(udp_rsu->sock_fd, send_buf, sizeof(send_buf), 0, (sockaddr *)&(udp_rsu->dst_addr), sizeof(udp_rsu->dst_addr));
-            std::cout << "length: " << sizeof(send_buf) << std::endl;
-            if (send_lenght == -1)
-            {
-                std::cout << "send fault!!!!!!!!" << std::endl; // 若发送失败。则返回-1
-                return -1;
-            }
-            else
-            {
-                std::cout << "send Success!!!!!!!sendto_len:  " << send_lenght << std::endl
-                          << std::endl;
-            }
+            std::cout << "send Success!!!!!!!sendto_len:  " << send_lenght << std::endl
+                      << std::endl;
         }
-
         loop_rate.sleep();
     }
     // closesocket(sockClient);

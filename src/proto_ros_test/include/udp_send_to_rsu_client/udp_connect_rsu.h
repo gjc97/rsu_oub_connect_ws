@@ -10,7 +10,7 @@
 #include <string.h>
 #include <iostream>
 #include <unistd.h>
-#include <map>
+
 #include <utility>
 
 #include "udp_send_to_rsu_client/rsu_message.h"
@@ -26,8 +26,8 @@ public:
     struct sockaddr_in dst_addr;
     struct sockaddr_in local_addr;
 
-    // std::string strLocalIP = "192.168.20.226";
-    std::string strLocalIP = "127.0.0.1";
+    std::string strLocalIP = "192.168.20.226";
+    // std::string strLocalIP = "127.0.0.1";
     int nLocalPort = 10087;
 
     std::string strIP = "192.168.20.224";
@@ -35,8 +35,7 @@ public:
 
     int nPort = 10086;
 
-    //感知数据来源map
-    std::map<std::string,unsigned char> perception_type;
+
 
 };
 

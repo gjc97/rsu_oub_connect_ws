@@ -1,7 +1,11 @@
 #ifndef RSU_DATA_SERIALIZE_H
 #define RSU_DATA_SERIALIZE_H
+
+#include <map>
+
 #include "nebulalink_perceptron.pb.h"
 #include "udp_send_to_rsu_client/rsu_message.h"
+
 
 typedef nebulalink::perceptron3::TargetSize NP3TARGETSIZE;
 typedef nebulalink::perceptron3::Perceptron NP3PERCEPTION;
@@ -11,6 +15,10 @@ typedef nebulalink::perceptron3::FrameArray NP3FRAMEARRAY;
 class RsuDataProto
 {
 public:
+
+    //感知数据来源map
+    std::map<std::string,unsigned char> perception_type;
+
     RsuDataProto();
     void DataSerialize();//数据序列化
     void DataDeserialize();//数据反序列化
@@ -21,7 +29,7 @@ public:
     void GetUTC();
     int GetTimeStamp(int return_time_stamp_type);
     std::string GetCurrentTimeStamp(nebulalink::perceptron3::TimeBase &input_time_base);
-    void getTimeBase(rsu_data_ns::TimeBase &input_time_base);
+    void getUTCTimeBase(rsu_data_ns::TimeBase &input_time_base);
     int64 getMiilsecondTimeStamp(int return_type);
 
     void SerializeTimeBase(nebulalink::perceptron3::TimeBase &input_time_base);
@@ -55,13 +63,15 @@ public:
     void SerializePerceptronTest(NP3PERCEPTION &input_perceptron, int serialize_method);
     NP3PERCEPTION SerializePerceptron();
 
-
+    void PrintPerceptron(NP3PERCEPTION input_msg);
 
     void SerializePerceptronSet(NP3PERCEPTIONSET &output_msg,
                                        struct rsu_data_ns::PerceptronSet input_msg);
 
     void DeserializePerceptron(char input_serialized_buf,int buf_length,
                                        struct rsu_data_ns::Perceptron &output_percecpron_struct);
+
+    void PrintPerceptronSet(NP3PERCEPTIONSET input_msg);
 
     std::string SerializeFrameArrayTest(NP3FRAMEARRAY &input_frame_array,int serialize_method);
     std::vector<rsu_data_ns::FrameArray> DeserializeFrameArrayTest(const std::string input_serialized_str);
