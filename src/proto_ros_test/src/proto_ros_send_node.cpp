@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
 
 
-    ros::Rate loop_rate(5);
+    ros::Rate loop_rate(10);
     while (ros::ok())
     {
         //1.填充自定义结构体

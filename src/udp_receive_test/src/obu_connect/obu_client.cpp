@@ -18,7 +18,7 @@
 
 int socket_fd_ = 0;
 static sockaddr_in server_addr_;
-std::string tcp_ip="127.0.0.1";
+std::string tcp_ip="192.168.10.224";
 // char tcp_ip[16]="192.168.20.224";
 unsigned short tcp_port = 5050;
 // unsigned short tcp_port = 10086;
@@ -481,10 +481,10 @@ void handle(unsigned char *buf, int len)
 			bool is_show00d = false;
 			bool is_show00e = false;
 			bool is_show00f = false;
-			bool is_show021 = false;
-			bool is_show022 = true;
-			bool is_show023 = false;
-			bool is_show024 = false;
+			bool is_show201 = false;
+			bool is_show202 = true;
+			bool is_show203 = false;
+			bool is_show204 = false;
 	
 			
             switch(FrameType)
@@ -1340,9 +1340,9 @@ void handle(unsigned char *buf, int len)
 				}
                 break;
 				
-				case 0x0021://车辆意图和请求(Vir List)//02|01
+				case 0x0201://车辆意图和请求(Vir List)//02|01
 				{
-					if(!is_show021)break;
+					if(!is_show201)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ VIR LIST  @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::VIR virlist;
 					virlist.ParseFromArray(data_buf,data_len);
@@ -1457,9 +1457,9 @@ void handle(unsigned char *buf, int len)
 				}
                 break;
 
-				case 0x0022://感知共享消息(SSM)
+				case 0x0202://感知共享消息(SSM)
 				{
-					if(!is_show022)break;
+					if(!is_show202)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ SSM @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::SsmInfo ssm;
 					ssm.ParseFromArray(data_buf,data_len);
@@ -1646,9 +1646,10 @@ void handle(unsigned char *buf, int len)
 				}
                 break;
 
-				case 0x0023://路侧协调消息(RSC)
+				case 0x0203://路侧协调消息(RSC)
 				{
-					if(!is_show023)break;
+					
+					if(!is_show203)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RSC @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::RscInfo rsc;
 					rsc.ParseFromArray(data_buf,data_len);
@@ -1708,16 +1709,15 @@ void handle(unsigned char *buf, int len)
 						printf("info****************************>> %d \n",lanecoor->info());
 						printf("description*********************>> %s \n",lanecoor->description().c_str());
 
-						printf("lane coordination num---------->> %d end<<---------\n",i);
+						printf("lane coordination num---------->> %d end<<---------\n", i);
 					}
 										
 					printf("@@@@@@@@@@@@@@@@@@@@@@ RSC END @@@@@@@@@@@@@@@@@@@@@@@@\n");
 				}
                 break;
-
-				case 0x0024://二阶段结果集(Day2 Result)
+				case 0x0204: // 二阶段结果集(Day2 Result)
 				{
-					if(!is_show024)break;
+					if(!is_show204)break;
 					printf("@@@@@@@@@@@@@@@@@@@@@@ DAYII RESULT @@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::CoordinationResult result;
 					result.ParseFromArray(data_buf,data_len);
