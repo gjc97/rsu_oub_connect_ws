@@ -7,28 +7,23 @@
 
 
 
-// std::string cwd = ros::package::getPath("udp_receive_test");
-// std::string inifile_path = cwd + "/config/send_config.ini";
-
-// int socket_fd_ = 0;
-// static sockaddr_in server_addr_;
-
-// std::string tcp_ip = getValueFromIni(inifile_path, "ClientSet", "ClientIP");
-// unsigned short tcp_port = std::atoi(getValueFromIni(inifile_path, "ClientSet", "ClientPort").c_str());
-
-int socket_fd_ = 0;
-static sockaddr_in server_addr_;
-std::string tcp_ip="192.168.10.224";
-// char tcp_ip[16]="192.168.20.224";
-unsigned short tcp_port = 5050;
-// unsigned short tcp_port = 10086;
 
 
 
 
+OBU_CLIENT::OBU_CLIENT()
+{
+	socket_fd_ = 0;
+    
+    tcp_ip = "192.168.10.224";
+    
+    tcp_port = 5050;
+	print_fun = new PRINT_FUN();
+
+}
 
 
-std::string getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key) 
+std::string OBU_CLIENT::getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key) 
 {
     std::ifstream file(filePath);
     std::string line;
@@ -56,7 +51,7 @@ std::string getValueFromIni(const std::string& filePath, const std::string& sect
     return value;
 }
 
-void SetConfig(std::string input_str)
+void OBU_CLIENT::SetConfig(std::string input_str)
 {
 	tcp_ip = getValueFromIni(input_str, "ClientSet", "ClientIP");
 	tcp_port = std::atoi(getValueFromIni(input_str, "ClientSet", "ClientPort").c_str());
@@ -65,7 +60,7 @@ void SetConfig(std::string input_str)
 	std::cout << "****************************************************" << std::endl;
 }
 
-int ClientInit(void)
+int OBU_CLIENT::ClientInit(void)
 {
 	CloseClient();
 
@@ -99,7 +94,7 @@ int ClientInit(void)
     return 1;
 }
 
-int CloseClient()
+int OBU_CLIENT::CloseClient()
 {
     if(socket_fd_ > 0)
     {
@@ -109,7 +104,7 @@ int CloseClient()
 
     return 1;
 }
-int NewThread(void* (*func)(void*), void* args)
+int OBU_CLIENT::NewThread(void* (*func)(void*), void* args)
 {
     pthread_t tid = 0;
 
@@ -130,34 +125,34 @@ int NewThread(void* (*func)(void*), void* args)
 
     return 0;
 }
-void* CreateRecvThread(void*args)
+void* OBU_CLIENT::CreateRecvThread(void*args)
 {
-    unsigned char recv_buf[C_MAX_PACK_SIZE] = {0};
-    int recv_len = 0;
+    // unsigned char recv_buf[C_MAX_PACK_SIZE] = {0};
+    // int recv_len = 0;
 
-	if(RegisterFrame()<0)
-		return 0;	
-	printf("Register Frame Send Suc!\r\n");
+	// if(RegisterFrame()<0)
+	// 	return 0;	
+	// printf("Register Frame Send Suc!\r\n");
 	
-    while(1)
-    {
-        recv_len = 0;
-        memset(recv_buf,0,C_MAX_PACK_SIZE);
-        recv_len = read(socket_fd_,recv_buf,C_MAX_PACK_SIZE);
-        if(recv_len <= 0)
-        {
-            printf("sockfd = %d\n",socket_fd_);
-            RegisterFrame();
-        }
-        else
-        {        
-            handle(recv_buf,recv_len);
-        }
-    }
+    // while(1)
+    // {
+    //     recv_len = 0;
+    //     memset(recv_buf,0,C_MAX_PACK_SIZE);
+    //     recv_len = read(socket_fd_,recv_buf,C_MAX_PACK_SIZE);
+    //     if(recv_len <= 0)
+    //     {
+    //         printf("sockfd = %d\n",socket_fd_);
+    //         RegisterFrame();
+    //     }
+    //     else
+    //     {        
+    //         handle(recv_buf,recv_len);
+    //     }
+    // }
     return 0;
 }
 
-int RegisterFrame(void)
+int OBU_CLIENT::RegisterFrame(void)
 {
     char register_buf[256] = {0};
     int reg_len = 0;
@@ -237,217 +232,7 @@ int RegisterFrame(void)
     return 1;
 }
 
-void show_acc4way_Info(nebulalink_pro_message::Acc4wayInfo* acc)
-{
-	printf("*********************Acc4wayInfo********************\n");
-	printf("acc4way_lon********************>>> %f \n",acc->acc4way_lon());
-	printf("acc4way_lat********************>>> %f \n",acc->acc4way_lat());
-	printf("acc4way_vert*******************>>> %f \n",acc->acc4way_vert());
-	printf("acc4way_yaw********************>>> %f \n",acc->acc4way_yaw());
-	printf("*******************Acc4wayInfo End******************\n");
-}
-
-void show_time(int64_t time)
-{
-	int miilsecond = time%1000;
-	int64_t second = time/1000;
-	struct tm *info;
-	info = localtime((time_t*)&second);
-	printf("time***************************>>> %s",asctime(info));
-	printf("millisecond********************>>> %d \n",miilsecond);
-}
-
-void show_gnss_info(nebulalink_pro_message::GnssInfo* gnssinfo)
-{
-	printf("\n***********************GnssDesc*********************\n");
-	printf("longitude**********************>>> %f \n",gnssinfo->longitude());
-	printf("latitude***********************>>> %f \n",gnssinfo->latitude());
-	printf("altitude***********************>>> %f \n",gnssinfo->altitude());
-	printf("speed**************************>>> %f \n",gnssinfo->speed());
-	show_time(gnssinfo->time());
-	printf("heading************************>>> %f \n",gnssinfo->heading());
-	printf("accel**************************>>> %f \n",gnssinfo->accel());
-	printf("accel_angle********************>>> %f \n",gnssinfo->accel_angle());
-	printf("satellite_num******************>>> %d \n",gnssinfo->satellite_num());
-	printf("precision**********************>>> %f \n",gnssinfo->precision());
-	nebulalink_pro_message::Acc4wayInfo* acc = gnssinfo->mutable_acc();
-	show_acc4way_Info(acc);
-	printf("*********************GnssDesc End*******************\n");
-}
-
-void show_veh_info(nebulalink_pro_message::VehicleInfo* vehinfo)
-{
-	printf("*******************VehicleInfoDesc******************\n");
-	printf("plate_num**********************>>> %s \n",vehinfo->plate_num().c_str());
-	printf("vehicle_class******************>>> %d \n",vehinfo->vehicle_class());
-	printf("fuel_type**********************>>> %d \n",vehinfo->fuel_type());
-	printf("brand_and_type*****************>>> %s \n",vehinfo->brand_and_type().c_str());
-	printf("length*************************>>> %f \n",vehinfo->length());
-	printf("width**************************>>> %f \n",vehinfo->width());
-	printf("height*************************>>> %f \n",vehinfo->height());
-	printf("*****************VehicleInfoDesc End****************\n");
-}
-
-void show_can_info(nebulalink_pro_message::CanInfo* caninfo)
-{
-	printf("***********************CanInfo**********************\n");
-	printf("transmission_state_source******>>> %d \n",caninfo->transmission_state_source());
-	printf("transmission_state*************>>> %d \n",caninfo->transmission_state());
-	printf("speed_can_valid****************>>> %d \n",caninfo->speed_can_valid());
-	printf("speed_can**********************>>> %f \n",caninfo->speed_can());
-	printf("heading_can_speed**************>>> %d \n",caninfo->heading_can_speed());
-	printf("heading_can********************>>> %f \n",caninfo->heading_can());
-	nebulalink_pro_message::Acc4wayInfo* acc = caninfo->mutable_acc_can();
-	show_acc4way_Info(acc);
-	printf("steering_wheel_angle_valid*****>>> %d \n",caninfo->steering_wheel_angle_valid());
-	printf("steering_wheel_angle***********>>> %f \n",caninfo->steering_wheel_angle());
-	printf("brake_state_valid**************>>> %d \n",caninfo->brake_state_valid());
-	printf("brake_pedal_state**************>>> %d \n",caninfo->brake_pedal_state());
-	printf("brake_applied_state************>>> %d \n",caninfo->brake_applied_state());
-	printf("traction_control_state*********>>> %d \n",caninfo->traction_control_state());
-	printf("abs_state**********************>>> %d \n",caninfo->abs_state());
-	printf("stability_control_state********>>> %d \n",caninfo->stability_control_state());
-	printf("brake_boost_applied************>>> %d \n",caninfo->brake_boost_applied());
-	printf("auxiliary_brake_state**********>>> %d \n",caninfo->auxiliary_brake_state());
-	printf("traction_control_state*********>>> %d \n",caninfo->traction_control_state());
-	printf("vehicle_event_flag_source******>>> %d \n",caninfo->vehicle_event_flag_source());
-	printf("vehicle_event_flag*************>>> %d \n",caninfo->vehicle_event_flag());
-	printf("vehicle_lights_state_source****>>> %d \n",caninfo->vehicle_lights_state_source());
-	printf("vehicle_lights_state***********>>> %d \n",caninfo->vehicle_lights_state());
-	printf("brake_pedal_depth_source*******>>> %d \n",caninfo->brake_pedal_depth_source());
-	printf("brake_pedal_depth**************>>> %f \n",caninfo->brake_pedal_depth());
-	printf("*********************CanInfo End********************\n");
-}
-
-void show_PointPos_Info(nebulalink_pro_message::PointPosInfo* point)
-{
-	printf("***********************PointPos*********************\n");
-	printf("longitude**********************>>> %f \n",point->point_longitude());
-	printf("latitude***********************>>> %f \n",point->point_latitude());
-	printf("altitude***********************>>> %f \n",point->point_altitude());
-	printf("speed**************************>>> %f \n",point->point_speed());
-	show_time(point->point_time());
-	printf("heading************************>>> %f \n",point->point_heading());
-	printf("*********************PointPos End*******************\n");
-}
-
-void  show_point_site(nebulalink_pro_message::PointSiteInfo* point)
-{
-	printf("*************************PointSite*********************\n");
-	printf("longitude**********************>>> %f \n",point->longitude());
-	printf("latitude***********************>>> %f \n",point->latitude());
-	printf("altitude***********************>>> %f \n",point->altitude());
-	printf("***********************PointSite End*******************\n");
-}
-
-void  show_path_point(nebulalink_pro_message::PathPointInfo* point)
-{
-	printf("*************************PathPoint*********************\n");
-	show_time(point->time());
-	printf("longitude**********************>>> %f \n",point->longitude());
-	printf("longitude**********************>>> %f \n",point->latitude());
-	printf("longitude**********************>>> %f \n",point->altitude());
-	printf("speed**************************>>> %f \n",point->speed());
-	printf("heading************************>>> %f \n",point->heading());
-	printf("acc4way_lon********************>>> %f \n",point->acc4way_lon());
-	printf("acc4way_lat********************>>> %f \n",point->acc4way_lat());
-	printf("acc4way_vert*******************>>> %f \n",point->acc4way_vert());
-	printf("acc4way_yaw********************>>> %f \n",point->acc4way_yaw());
-	printf("distance***********************>>> %f \n",point->distance());
-	printf("upper_node_id******************>>> %" PRIu64 " \n",point->upper_node_id());
-	printf("down_node_id*******************>>> %" PRIu64 " \n",point->down_node_id());
-	printf("relate_lane********************>>> %d \n",point->relate_lane());
-
-	printf("***********************PathPoint End*******************\n");
-}
-
-void  show_relate_path(nebulalink_pro_message::RelatePathInfo* path)
-{
-	printf("*************************RelatePath*********************\n");
-	printf("radius*************************>>> %f \n",path->path_radius());
-	printf("Path point size****************>>> %d \n",path->pathpoints_size());
-	for(int i = 0; i < path->pathpoints_size(); i++)
-	{
-		nebulalink_pro_message::PointSiteInfo* point = path->mutable_pathpoints(i);
-		printf("Path point num*************>> %d <<***********\n",i);
-		show_point_site(point);
-		printf("Path point num*************>> %d end<<********\n",i);		
-	}
-	printf("***********************RelatePath End*******************\n");
-}
-
-void  show_relate_link(nebulalink_pro_message::RelateLinkInfo* link)
-{
-	printf("*************************RelateLink*********************\n");
-	printf("up_node_id*********************>>> %" PRIu64 " \n",link->up_node_id());
-	printf("down_node_id*******************>>> %" PRIu64 " \n",link->down_node_id());
-	printf("Lane size*************>> %d \n",link->lanes_size());
-	for(int lanesize = 0; lanesize < link->lanes_size(); lanesize++)
-	{
-		nebulalink_pro_message::RelateLinkInfo_RelateLane* lane = link->mutable_lanes(lanesize);
-		printf("Lane num**************>> %d <<***********\n",lanesize);
-		printf("lane_id &&&&&&&&&&&&&&&&&&&&&&&>>> %d \n",lane->lane_id());
-		printf("Lane num**************>> %d end<<********\n",lanesize);
-	}
-	printf("***********************RelateLink End*******************\n");
-}
-
-void show_target_lane(nebulalink_pro_message::TargetLaneInfo* target)
-{
-	printf("===================TargetLaneInfo==================\n");
-	printf("upper_node_id===================>> %" PRIu64 " \n",target->upper_node_id());
-	printf("down_node_id====================>> %" PRIu64 " \n",target->down_node_id());
-	printf("lane_id=========================>> %d \n",target->lane_id());
-	printf("time range size=================>> %d \n",target->time_range_size());
-	for(int i = 0; i < target->time_range_size(); i++)
-	{
-		nebulalink_pro_message::TimeRange* range = target->mutable_time_range(i);
-		printf("time range num******************>> %d <<************\n",i);
-		printf("start_");
-		show_time(range->start_time());
-		printf("end_");
-		show_time(range->end_time());
-		printf("time range num******************>> %d end<<*********\n",i);		
-	}	
-	printf("===================TargetLaneInfo End==============\n");
-}
-
-void show_drive_suggestion(nebulalink_pro_message::CoordinationDriveSuggestion* suggestion)
-{
-	printf("=============CoordinationDriveSuggestion===========\n");
-	nebulalink_pro_message::SpeedLimitResult* speed_limit = suggestion->mutable_speed_guide();	
-	printf("******************SpeedLimitResult************** \n");
-	printf("ceiling*************************>> %f \n",speed_limit->ceiling());
-	printf("floor***************************>> %f \n",speed_limit->floor());
-	printf("****************SpeedLimitResult End************ \n");
-	nebulalink_pro_message::DriveBehaviorInfo* behavior = suggestion->mutable_behavior_suggest();
-	printf("******************DriveBehaviorInfo************** \n");
-	printf("behavior************************>> %d \n",behavior->behavior());
-	printf("****************DriveBehaviorInfo End************ \n");
-	printf("time_line ");
-	show_time(suggestion->time_line());
-	printf("===========CoordinationDriveSuggestion End=========\n");
-}
-
-void show_target_veh(nebulalink_pro_message::TargetVehicle* vehicle)
-{
-	printf("device_id***********************>> %s \n",vehicle->device_id().c_str());
-	printf("relative_pos********************>> %d \n",vehicle->relative_pos());
-	nebulalink_pro_message::DriveBehaviorInfo* behavior = vehicle->mutable_behavior_info();
-	printf("******************DriveBehaviorInfo************** \n");
-	printf("behavior************************>> %d \n",behavior->behavior());
-	printf("****************DriveBehaviorInfo End************ \n");
-}
-
-void show_predic_info(nebulalink_pro_message::PathPrediction* prediction)
-{
-	printf("***********************PredicInfo*********************\n");
-	printf("radius*************************>>> %d \n",prediction->radius());
-	printf("confidence*********************>>> %d \n",prediction->confidence());	
-	printf("*********************PredicInfo End*******************\n");
-}
-
-void handle(unsigned char *buf, int len)
+void OBU_CLIENT::handle(unsigned char *buf, int len)
 {
     unsigned char data_buf[C_MAX_PACK_SIZE] = {0};
     unsigned short data_len = 0;
@@ -508,33 +293,33 @@ void handle(unsigned char *buf, int len)
 						if(obu->has_gnss_info())
 						{
 							nebulalink_pro_message::GnssInfo* gnssinfo = obu->mutable_gnss_info();
-							show_gnss_info(gnssinfo);
+							print_fun->show_gnss_info(gnssinfo);
 						}
 						
 						if(obu->has_veh_info())
 						{
 							nebulalink_pro_message::VehicleInfo* vehinfo = obu->mutable_veh_info();
-							show_veh_info(vehinfo);
+							print_fun->show_veh_info(vehinfo);
 						}
 
 						if(obu->has_can_info())
 						{
 							nebulalink_pro_message::CanInfo* caninfo = obu->mutable_can_info();
-							show_can_info(caninfo);
+							print_fun->show_can_info(caninfo);
 						}
 
 						for(int msize = 0; msize < obu->historypath_size(); msize++)
 						{
 							nebulalink_pro_message::PointPosInfo* point = obu->mutable_historypath(msize);
 							printf("historypath point=====>> %d <<===========\n",msize);
-							show_PointPos_Info(point);
+							print_fun->show_PointPos_Info(point);
 							printf("historypath point=====>> %d end<<========\n",msize);
 						}	
 						
 						if(obu->has_predict_path())
 						{
 							nebulalink_pro_message::PathPrediction* prediction = obu->mutable_predict_path();
-							show_predic_info(prediction);
+							print_fun->show_predic_info(prediction);
 						}
 					}	
 
@@ -568,33 +353,33 @@ void handle(unsigned char *buf, int len)
 						if(obu->has_gnss_info())
 						{
 							nebulalink_pro_message::GnssInfo* gnssinfo = obu->mutable_gnss_info();
-							show_gnss_info(gnssinfo);
+							print_fun->show_gnss_info(gnssinfo);
 						}
 						
 						if(obu->has_veh_info())
 						{
 							nebulalink_pro_message::VehicleInfo* vehinfo = obu->mutable_veh_info();
-							show_veh_info(vehinfo);
+							print_fun->show_veh_info(vehinfo);
 						}
 
 						if(obu->has_can_info())
 						{
 							nebulalink_pro_message::CanInfo* caninfo = obu->mutable_can_info();
-							show_can_info(caninfo);
+							print_fun->show_can_info(caninfo);
 						}
 
 						for(int msize = 0; msize < obu->historypath_size(); msize++)
 						{
 							nebulalink_pro_message::PointPosInfo* point = obu->mutable_historypath(msize);
 							printf("historypath point=====>> %d <<===========\n",msize);
-							show_PointPos_Info(point);
+							print_fun->show_PointPos_Info(point);
 							printf("historypath point=====>> %d end<<========\n",msize);
 						}	
 
 						if(obu->has_predict_path())
 						{
 							nebulalink_pro_message::PathPrediction* prediction = obu->mutable_predict_path();
-							show_predic_info(prediction);
+							print_fun->show_predic_info(prediction);
 						}
 						printf("OBU num===============>> %d end<<========\n",i);
 					}
@@ -646,20 +431,20 @@ void handle(unsigned char *buf, int len)
                         if(ptv->has_gnss_info())
                         {
 							nebulalink_pro_message::GnssInfo* gnssinfo = ptv->mutable_gnss_info();
-							show_gnss_info(gnssinfo);
+							print_fun->show_gnss_info(gnssinfo);
                         }
 						
 						if(ptv->has_veh_info())
 						{
 							nebulalink_pro_message::VehicleInfo* vehinfo = ptv->mutable_veh_info();
-							show_veh_info(vehinfo);
+							print_fun->show_veh_info(vehinfo);
 						}
 
 						for(int msize = 0; msize < ptv->history_points_size(); msize++)
 						{
 							nebulalink_pro_message::PointPosInfo* point = ptv->mutable_history_points(msize);
 							printf("historypath point=====>> %d <<===========\n",msize);
-							show_PointPos_Info(point);
+							print_fun->show_PointPos_Info(point);
 							printf("historypath point=====>> %d end<<========\n",msize);
 						}	
 						
@@ -689,14 +474,14 @@ void handle(unsigned char *buf, int len)
 						if(pnv->has_gnss_info())
 						{
 							nebulalink_pro_message::GnssInfo* gnssinfo = pnv->mutable_gnss_info();
-							show_gnss_info(gnssinfo);
+							print_fun->show_gnss_info(gnssinfo);
 						}
 							
 						for(int msize = 0; msize < pnv->history_points_size(); msize++)
 						{
 							nebulalink_pro_message::PointPosInfo* point = pnv->mutable_history_points(msize);
 							printf("historypath point=====>> %d <<===========\n",msize);
-							show_PointPos_Info(point);
+							print_fun->show_PointPos_Info(point);
 							printf("historypath point=====>> %d end<<========\n",msize);
 						}	
 
@@ -712,7 +497,7 @@ void handle(unsigned char *buf, int len)
 					printf("@@@@@@@@@@@@@@@@@@@@@@ LOGICAL MAP @@@@@@@@@@@@@@@@@@@@@@\n");
 					nebulalink_pro_message::LogicalMap map;
 					map.ParseFromArray(data_buf,data_len);
-					show_time(map.time());
+					print_fun->show_time(map.time());
 					printf("Node size------------->> %d \n",map.nodes_size());
 					for(int i = 0; i < map.nodes_size(); i++)
 					{
@@ -841,22 +626,22 @@ void handle(unsigned char *buf, int len)
 						printf("rts_altitude====================>> %f \n",rtsData->rts_altitude());
 						printf("rts_description=================>> %s \n",rtsData->rts_description().c_str());
 						printf("rts_start_");
-						show_time(rtsData->rts_start_time());
+						print_fun->show_time(rtsData->rts_start_time());
 						printf("rts_end_");
-						show_time(rtsData->rts_end_time());
+						print_fun->show_time(rtsData->rts_end_time());
 						printf("rts_priority====================>> %d \n",rtsData->rts_priority());
 						printf("rsu_longitude===================>> %f \n",rtsData->rsu_longitude());
 						printf("rsu_latitude====================>> %f \n",rtsData->rsu_latitude());
 						printf("rsu_altitude====================>> %f \n",rtsData->rsu_altitude());
 						printf("rsu_");
-						show_time(rtsData->rsu_time());
+						print_fun->show_time(rtsData->rsu_time());
 						printf("rsu_id==========================>> %s \n",rtsData->rsu_id().c_str());
 						printf("Path size=============>> %d \n",rtsData->paths_size());
 						for(int pathsize = 0; pathsize < rtsData->paths_size(); pathsize++)
 						{
 							nebulalink_pro_message::RelatePathInfo* path = rtsData->mutable_paths(pathsize);
 							printf("Path num==============>> %d <<===========\n",pathsize);
-							show_relate_path(path);
+							print_fun->show_relate_path(path);
 							printf("Path num==============>> %d end<<========\n",pathsize);
 						}
 						
@@ -865,7 +650,7 @@ void handle(unsigned char *buf, int len)
 						{
 							nebulalink_pro_message::RelateLinkInfo* link = rtsData->mutable_links(linksize);
 							printf("Link num==============>> %d <<===========\n",linksize);
-							show_relate_link(link);
+							print_fun->show_relate_link(link);
 							printf("Link num==============>> %d end<<========\n",linksize);
 						}
 						printf("Rts num-------------->> %d end<<--------\n",i);
@@ -894,22 +679,22 @@ void handle(unsigned char *buf, int len)
 						printf("rte_radius======================>> %f \n",rteData->rte_radius());
 						printf("rte_description=================>> %s \n",rteData->rte_description().c_str());
 						printf("rts_start_");
-						show_time(rteData->rte_start_time());
+						print_fun->show_time(rteData->rte_start_time());
 						printf("rts_end_");
-						show_time(rteData->rte_end_time());
+						print_fun->show_time(rteData->rte_end_time());
 						printf("rte_priority====================>> %d \n",rteData->rte_priority());
 						printf("rsu_longitude===================>> %f \n",rteData->rsu_longitude());
 						printf("rsu_latitude====================>> %f \n",rteData->rsu_latitude());
 						printf("rsu_altitude====================>> %f \n",rteData->rsu_altitude());
 						printf("rsu_");
-						show_time(rteData->rsu_time());
+						print_fun->show_time(rteData->rsu_time());
 						printf("rsu_id==========================>> %s \n",rteData->rsu_id().c_str());
 						printf("Path size=============>> %d \n",rteData->paths_size());
 						for(int pathsize = 0; pathsize < rteData->paths_size(); pathsize++)
 						{
 							nebulalink_pro_message::RelatePathInfo* path = rteData->mutable_paths(pathsize);
 							printf("Path num==============>> %d <<===========\n",pathsize);
-							show_relate_path(path);
+							print_fun->show_relate_path(path);
 							printf("Path num==============>> %d end<<========\n",pathsize);
 						}
 						
@@ -918,7 +703,7 @@ void handle(unsigned char *buf, int len)
 						{
 							nebulalink_pro_message::RelateLinkInfo* link = rteData->mutable_links(linksize);
 							printf("Link num==============>> %d <<===========\n",linksize);
-							show_relate_link(link);
+							print_fun->show_relate_link(link);
 							printf("Link num==============>> %d end<<========\n",linksize);
 						}						
 						printf("Rte num-------------->> %d end<<--------\n",i);
@@ -942,7 +727,7 @@ void handle(unsigned char *buf, int len)
 						printf("description=====================>> %s \n",tlinfo->description().c_str());
 						printf("intersection_region_node_id=====>> %" PRIu64 " \n",tlinfo->intersection_region_node_id());
 						printf("status==========================>> %d \n",tlinfo->status());
-						show_time(tlinfo->time());
+						print_fun->show_time(tlinfo->time());
 						printf("time_confidence=================>> %d \n",tlinfo->time_confidence());
 						printf("Phase size======================>> %d \n",tlinfo->phases_size());
 						for(int phasesize = 0; phasesize < tlinfo->phases_size(); phasesize++)
@@ -991,12 +776,12 @@ void handle(unsigned char *buf, int len)
 						if(target->has_gnss())
 						{
 							nebulalink_pro_message::GnssInfo* gnss = target->mutable_gnss();
-							show_gnss_info(gnss);
+							print_fun->show_gnss_info(gnss);
 						}
 						if(target->has_veh_info())
 						{
 							nebulalink_pro_message::VehicleInfo* veh = target->mutable_veh_info();
-							show_veh_info(veh);
+							print_fun->show_veh_info(veh);
 						}
 						if(target->has_lm_res())
 						{
@@ -1352,19 +1137,19 @@ void handle(unsigned char *buf, int len)
 						nebulalink_pro_message::VirInfo* vir = virlist.mutable_virs(i);
 						printf("Vir num===============>> %d <<===========\n",i);
 						printf("device_id=======================>> %s \n",vir->device_id().c_str());
-						show_time(vir->time());
+						print_fun->show_time(vir->time());
 						nebulalink_pro_message::DriveBehaviorInfo* behavior = vir->mutable_behavior_info();
 						printf("******************DriveBehaviorInfo************** \n");
 						printf("behavior************************>> %d \n",behavior->behavior());
 						printf("****************DriveBehaviorInfo End************ \n");
 						nebulalink_pro_message::PathPointInfo* pathpoint = vir->mutable_path_point();
-						show_path_point(pathpoint);
+						print_fun->show_path_point(pathpoint);
 						printf("plan point size================>> %d \n",vir->plan_points_size());
 						for(int ix = 0; ix < vir->plan_points_size(); ix++)
 						{
 							printf("plan point num===============>> %d <<===========\n",ix);
 							nebulalink_pro_message::PathPointInfo* pathpoint = vir->mutable_plan_points(ix);
-							show_path_point(pathpoint);
+							print_fun->show_path_point(pathpoint);
 							printf("plan point num===============>> %d end<<========\n",ix);
 						}
 
@@ -1379,7 +1164,7 @@ void handle(unsigned char *buf, int len)
 							printf("obu_device**********************>> %s \n",reqinfo->obu_device().c_str());
 							printf("rsu_device**********************>> %s \n",reqinfo->rsu_device().c_str());
 							printf("life_");
-							show_time(reqinfo->life_time());
+							print_fun->show_time(reqinfo->life_time());
 
 							if(reqinfo->has_lane_change())
 							{
@@ -1399,11 +1184,11 @@ void handle(unsigned char *buf, int len)
 								printf("down_node_id********************>> %" PRIu64 " \n",clearway->down_node_id());
 								printf("clear_lane**********************>> %d \n",clearway->clear_lane());
 								printf("start_");
-								show_time(clearway->start_time());
+								print_fun->show_time(clearway->start_time());
 								printf("end_");
-								show_time(clearway->end_time());
+								print_fun->show_time(clearway->end_time());
 								nebulalink_pro_message::RelatePathInfo* path = clearway->mutable_path();
-								show_relate_path(path);
+								print_fun->show_relate_path(path);
 								printf("*****************ClearWayInfo End************* \n");
 							}
 							
@@ -1416,7 +1201,7 @@ void handle(unsigned char *buf, int len)
 								printf("phase_id************************>> %d \n",priority->phase_id());
 								printf("maneuver************************>> %d \n",priority->maneuver());
 								printf("arrive_");
-								show_time(priority->arrive_time());
+								print_fun->show_time(priority->arrive_time());
 								printf("distance************************>> %f \n",priority->distance());
 								printf("**************SignalPriorityInfo End********** \n");
 							}
@@ -1430,7 +1215,7 @@ void handle(unsigned char *buf, int len)
 								{
 									printf("path num&&&&&&&&&&&&&&&&&&&&&>> %d <<&&&&&&&&&&&\n",ii);
 									nebulalink_pro_message::RelatePathInfo* path = senseshare->mutable_paths(ii);
-									show_relate_path(path);
+									print_fun->show_relate_path(path);
 									printf("plan num&&&&&&&&&&&&&&&&&&&&&>> %d end<<&&&&&&&&\n",ii);
 								}								
 								printf("***************SenseShareingInfo End********** \n");
@@ -1474,7 +1259,7 @@ void handle(unsigned char *buf, int len)
 						{
 							nebulalink_pro_message::PointSiteInfo* point = polygon->mutable_points(ix);
 							printf("point site num=============>> %d <<===========\n",ix);
-							show_point_site(point);
+							print_fun->show_point_site(point);
 							printf("point site num=============>> %d end<<========\n",ix);		
 						}
 						printf("polygons num------------------->> %d end<<---------\n",i);
@@ -1502,20 +1287,20 @@ void handle(unsigned char *buf, int len)
 								if(ptv->has_gnss_info())
 								{
 									nebulalink_pro_message::GnssInfo* gnssinfo = ptv->mutable_gnss_info();
-									show_gnss_info(gnssinfo);
+									print_fun->show_gnss_info(gnssinfo);
 								}
 								
 								if(ptv->has_veh_info())
 								{
 									nebulalink_pro_message::VehicleInfo* vehinfo = ptv->mutable_veh_info();
-									show_veh_info(vehinfo);
+									print_fun->show_veh_info(vehinfo);
 								}
 								
 								for(int msize = 0; msize < ptv->history_points_size(); msize++)
 								{
 									nebulalink_pro_message::PointPosInfo* point = ptv->mutable_history_points(msize);
 									printf("historypath point=====>> %d <<===========\n",msize);
-									show_PointPos_Info(point);
+									print_fun->show_PointPos_Info(point);
 									printf("historypath point=====>> %d end<<========\n",msize);
 								}	
 							}
@@ -1533,14 +1318,14 @@ void handle(unsigned char *buf, int len)
 								if(pnv->has_gnss_info())
 								{
 									nebulalink_pro_message::GnssInfo* gnssinfo = pnv->mutable_gnss_info();
-									show_gnss_info(gnssinfo);
+									print_fun->show_gnss_info(gnssinfo);
 								}
 									
 								for(int msize = 0; msize < pnv->history_points_size(); msize++)
 								{
 									nebulalink_pro_message::PointPosInfo* point = pnv->mutable_history_points(msize);
 									printf("historypath point=====>> %d <<===========\n",msize);
-									show_PointPos_Info(point);
+									print_fun->show_PointPos_Info(point);
 									printf("historypath point=====>> %d end<<========\n",msize);
 								}	
 								
@@ -1556,7 +1341,7 @@ void handle(unsigned char *buf, int len)
 						{
 							nebulalink_pro_message::PointSiteInfo* point = ptc->mutable_polygons(ix);
 							printf("point site num=============>> %d <<===========\n",ix);
-							show_point_site(point);
+							print_fun->show_point_site(point);
 							printf("point site num=============>> %d end<<========\n",ix);		
 						}
 
@@ -1584,14 +1369,14 @@ void handle(unsigned char *buf, int len)
 						printf("acc4way_lat=====================>> %f \n",obstacle->acc4way_lat());
 						printf("acc4way_vert====================>> %f \n",obstacle->acc4way_vert());
 						printf("acc4way_yaw=====================>> %f \n",obstacle->acc4way_yaw());
-						show_time(obstacle->time());
+						print_fun->show_time(obstacle->time());
 						printf("tracking_time===================>> %d \n",obstacle->tracking_time());
 						printf("point site size=================>> %d \n",obstacle->polygons_size());
 						for(int ix = 0; ix < obstacle->polygons_size(); ix++)
 						{
 							nebulalink_pro_message::PointSiteInfo* point = obstacle->mutable_polygons(ix);
 							printf("point site num=============>> %d <<===========\n",ix);
-							show_point_site(point);
+							print_fun->show_point_site(point);
 							printf("point site num=============>> %d end<<========\n",ix);		
 						}
 						printf("obstacles num------------------>> %d end<<---------\n",i);
@@ -1611,22 +1396,22 @@ void handle(unsigned char *buf, int len)
 						printf("rte_radius======================>> %f \n",rteData->rte_radius());
 						printf("rte_description=================>> %s \n",rteData->rte_description().c_str());
 						printf("rts_start_");
-						show_time(rteData->rte_start_time());
+						print_fun->show_time(rteData->rte_start_time());
 						printf("rts_end_");
-						show_time(rteData->rte_end_time());
+						print_fun->show_time(rteData->rte_end_time());
 						printf("rte_priority====================>> %d \n",rteData->rte_priority());
 						printf("rsu_longitude===================>> %f \n",rteData->rsu_longitude());
 						printf("rsu_latitude====================>> %f \n",rteData->rsu_latitude());
 						printf("rsu_altitude====================>> %f \n",rteData->rsu_altitude());
 						printf("rsu_");
-						show_time(rteData->rsu_time());
+						print_fun->show_time(rteData->rsu_time());
 						printf("rsu_id==========================>> %s \n",rteData->rsu_id().c_str());
 						printf("Path size=============>> %d \n",rteData->paths_size());
 						for(int pathsize = 0; pathsize < rteData->paths_size(); pathsize++)
 						{
 							nebulalink_pro_message::RelatePathInfo* path = rteData->mutable_paths(pathsize);
 							printf("Path num==============>> %d <<===========\n",pathsize);
-							show_relate_path(path);
+							print_fun->show_relate_path(path);
 							printf("Path num==============>> %d end<<========\n",pathsize);
 						}
 						
@@ -1635,7 +1420,7 @@ void handle(unsigned char *buf, int len)
 						{
 							nebulalink_pro_message::RelateLinkInfo* link = rteData->mutable_links(linksize);
 							printf("Link num==============>> %d <<===========\n",linksize);
-							show_relate_link(link);
+							print_fun->show_relate_link(link);
 							printf("Link num==============>> %d end<<========\n",linksize);
 						}
 						
@@ -1655,7 +1440,7 @@ void handle(unsigned char *buf, int len)
 					rsc.ParseFromArray(data_buf,data_len);
 
 					printf("source_id--------------------->> %s \n",rsc.source_id().c_str());
-					show_time(rsc.time());
+					print_fun->show_time(rsc.time());
 					printf("rsc_longitude----------------->> %f \n",rsc.rsc_longitude());
 					printf("rsc_latitude------------------>> %f \n",rsc.rsc_latitude());
 					printf("rsc_altitude------------------>> %f \n",rsc.rsc_altitude());
@@ -1671,11 +1456,11 @@ void handle(unsigned char *buf, int len)
 							nebulalink_pro_message::DriveSuggestion* drivesug = vehcoor->mutable_suggest();
 							printf("******************DriveSuggestion************** \n");
 							printf("behavior************************>> %d \n",drivesug->behavior());
-							show_time(drivesug->time());
+							print_fun->show_time(drivesug->time());
 							nebulalink_pro_message::RelatePathInfo* prlatepath = drivesug->mutable_path();
-							show_relate_path(prlatepath);
+							print_fun->show_relate_path(prlatepath);
 							nebulalink_pro_message::RelateLinkInfo* prlatelink = drivesug->mutable_link();
-							show_relate_link(prlatelink);
+							print_fun->show_relate_link(prlatelink);
 
 							printf("****************DriveSuggestion End************ \n");
 						}
@@ -1684,7 +1469,7 @@ void handle(unsigned char *buf, int len)
 						{
 							nebulalink_pro_message::PathPointInfo* pathpoint = vehcoor->mutable_points(ix);
 							printf("Path Point num----------------->> %d <<------------\n",ix);
-							show_path_point(pathpoint);
+							print_fun->show_path_point(pathpoint);
 							printf("Path Point num----------------->> %d end<<---------\n",ix);
 						}
 						printf("info============================>> %d \n",vehcoor->info());
@@ -1697,13 +1482,13 @@ void handle(unsigned char *buf, int len)
 						nebulalink_pro_message::LaneCoordination* lanecoor = rsc.mutable_lane_coordination(i);
 						printf("lane coordination num---------->> %d <<------------\n",i);
 						nebulalink_pro_message::RelatePathInfo* prlatepath = lanecoor->mutable_path();
-						show_relate_path(prlatepath);
+						print_fun->show_relate_path(prlatepath);
 						nebulalink_pro_message::RelateLinkInfo* prlatelink = lanecoor->mutable_link();
-						show_relate_link(prlatelink);
+						print_fun->show_relate_link(prlatelink);
 						printf("start_");
-						show_time(lanecoor->start_time());
+						print_fun->show_time(lanecoor->start_time());
 						printf("end_");
-						show_time(lanecoor->end_time());
+						print_fun->show_time(lanecoor->end_time());
 						printf("speed***************************>> %f \n",lanecoor->speed());
 						printf("behavior************************>> %d \n",lanecoor->behavior());
 						printf("info****************************>> %d \n",lanecoor->info());
@@ -1730,14 +1515,14 @@ void handle(unsigned char *buf, int len)
 						{
 							printf("===================Has Target Lane================== \n");
 							nebulalink_pro_message::TargetLaneInfo* targetlane = lanechange->mutable_target_lane();
-							show_target_lane(targetlane);
+							print_fun->show_target_lane(targetlane);
 						}
 						
 						if(lanechange->has_suggestion())
 						{
 							printf("===================Has Drive Suggestion============= \n");
 							nebulalink_pro_message::CoordinationDriveSuggestion* suggestion = lanechange->mutable_suggestion();
-							show_drive_suggestion(suggestion);
+							print_fun->show_drive_suggestion(suggestion);
 						}
 
 						if(0 < lanechange->veh_list_size())
@@ -1747,7 +1532,7 @@ void handle(unsigned char *buf, int len)
 							{
 								nebulalink_pro_message::TargetVehicle* vehicle = lanechange->mutable_veh_list(i);
 								printf("Veh list num=================>> %d <<===========\n",i);
-								show_target_veh(vehicle);
+								print_fun->show_target_veh(vehicle);
 								printf("Veh list num=================>> %d end<<========\n",i);
 							}
 						}
@@ -1763,14 +1548,14 @@ void handle(unsigned char *buf, int len)
 						{
 							printf("===================Has Target Lane================== \n");
 							nebulalink_pro_message::TargetLaneInfo* targetlane = clearway->mutable_target_lane();
-							show_target_lane(targetlane);
+							print_fun->show_target_lane(targetlane);
 						}
 						
 						if(clearway->has_suggestion())
 						{
 							printf("===================Has Drive Suggestion============= \n");
 							nebulalink_pro_message::CoordinationDriveSuggestion* suggestion = clearway->mutable_suggestion();
-							show_drive_suggestion(suggestion);
+							print_fun->show_drive_suggestion(suggestion);
 						}
 					}
 					
@@ -1786,7 +1571,7 @@ void handle(unsigned char *buf, int len)
 							{
 								nebulalink_pro_message::TargetVehicle* vehicle = sensorshare->mutable_veh_list(i);
 								printf("Veh list num=================>> %d <<===========\n",i);
-								show_target_veh(vehicle);
+								print_fun->show_target_veh(vehicle);
 								printf("Veh list num=================>> %d end<<========\n",i);
 							}
 						}
@@ -1801,14 +1586,14 @@ void handle(unsigned char *buf, int len)
 						{
 							printf("===================Has Target Lane================== \n");
 							nebulalink_pro_message::TargetLaneInfo* targetlane = intersectionpass->mutable_target_lane();
-							show_target_lane(targetlane);
+							print_fun->show_target_lane(targetlane);
 						}
 						
 						if(intersectionpass->has_suggestion())
 						{
 							printf("===================Has Drive Suggestion============= \n");
 							nebulalink_pro_message::CoordinationDriveSuggestion* suggestion = intersectionpass->mutable_suggestion();
-							show_drive_suggestion(suggestion);
+							print_fun->show_drive_suggestion(suggestion);
 						}
 						
 						if(0 < intersectionpass->current_lane_size())
@@ -1818,7 +1603,7 @@ void handle(unsigned char *buf, int len)
 							{
 								nebulalink_pro_message::TargetLaneInfo* targetlane = intersectionpass->mutable_current_lane(i);
 								printf("current lane num=================>> %d <<===========\n",i);
-								show_target_lane(targetlane);
+								print_fun->show_target_lane(targetlane);
 								printf("current lane num=================>> %d end<<========\n",i);
 							}
 						}
@@ -1833,7 +1618,7 @@ void handle(unsigned char *buf, int len)
 						{
 							printf("===================Has Drive Suggestion============= \n");
 							nebulalink_pro_message::CoordinationDriveSuggestion* suggestion = rampin->mutable_suggestion();
-							show_drive_suggestion(suggestion);
+							print_fun->show_drive_suggestion(suggestion);
 						}
 					}
 					printf("@@@@@@@@@@@@@@@@@@@@@@ DAYII RESULT END @@@@@@@@@@@@@@@\n");
@@ -1849,3 +1634,6 @@ void handle(unsigned char *buf, int len)
 
     return;
 }
+
+
+
