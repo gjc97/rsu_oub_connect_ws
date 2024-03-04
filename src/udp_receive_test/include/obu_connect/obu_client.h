@@ -41,7 +41,7 @@ public:
 	PRINT_FUN *print_fun;
     
     int socket_fd_;
-    static sockaddr_in server_addr_;
+    sockaddr_in server_addr_;
     std::string tcp_ip;
     unsigned short tcp_port;
     // unsigned short tcp_port = 10086;

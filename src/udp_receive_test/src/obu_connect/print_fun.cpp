@@ -1,13 +1,20 @@
 #include <stdlib.h>
-#include <string>
+
 #include <iostream>
 #include <unistd.h>
+
+
+#include <stdlib.h>
+#include <string>
+#include <inttypes.h>
 
 #include "obu_connect/print_fun.h"
 
 
 PRINT_FUN::PRINT_FUN()
-{}
+{
+	
+}
 
 
 void PRINT_FUN::show_acc4way_Info(nebulalink_pro_message::Acc4wayInfo* acc)
@@ -127,8 +134,8 @@ void  PRINT_FUN::show_path_point(nebulalink_pro_message::PathPointInfo* point)
 	printf("acc4way_vert*******************>>> %f \n",point->acc4way_vert());
 	printf("acc4way_yaw********************>>> %f \n",point->acc4way_yaw());
 	printf("distance***********************>>> %f \n",point->distance());
-	printf("upper_node_id******************>>> %PRIu64 " \n",point->upper_node_id());
-	printf("down_node_id*******************>>> %PRIu64 " \n",point->down_node_id());
+	printf("upper_node_id******************>>> %" PRIu64 " \n",point->upper_node_id());
+	printf("down_node_id*******************>>> %" PRIu64 " \n",point->down_node_id());
 	printf("relate_lane********************>>> %d \n",point->relate_lane());
 
 	printf("***********************PathPoint End*******************\n");

@@ -9,18 +9,25 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "udp_receive");
 	ros::NodeHandle nh("~");
 	ros::Rate loop_rate(10);
-
-	OBU_CLIENT* obu_client;
-
+	
+	OBU_CLIENT* obu_client = new OBU_CLIENT();
+	
 	std::string cwd = ros::package::getPath("udp_receive_test");
-	std::string inifile_path = cwd + "/config/receive_config.ini";
 
+	std::string inifile_path = cwd + "/config/receive_config.ini";
+	
 	obu_client->SetConfig(inifile_path);
+	
 
 	if(obu_client->ClientInit()<0)
 	{
 		printf("ClientInit failed...\n");
 		return -1;
+	}
+	else
+	{
+		printf("ClientInit Sucess...\n");
+
 	}
 	
 	// if(NewThread(CreateRecvThread,NULL) == -1)
@@ -29,37 +36,28 @@ int main(int argc, char **argv)
 	// 	return -1;
 	// }
 
-	while(ros::ok())
+	while (ros::ok())
+	{
 
-
-
-	
- 
-
-	// if (RegisterFrame() < 0)
+		// if (RegisterFrame() < 0)
 		// return 0;
-	printf("Register Frame Send Suc!\r\n");
+		printf("Register Frame Send Suc!\r\n");
 
-   int recv_len = 0;
-	unsigned char recv_buf[C_MAX_PACK_SIZE] = {0};
-	memset(recv_buf, 0, C_MAX_PACK_SIZE);
-	recv_len = read(obu_client->socket_fd_,recv_buf, C_MAX_PACK_SIZE);
-	if (recv_len <= 0)
-	{
-		printf("sockfd = %d\n",obu_client->socket_fd_);
-		obu_client->RegisterFrame();
-	}
-	else
-	{
-		obu_client->handle(recv_buf, recv_len);
-	}
+		int recv_len = 0;
+		unsigned char recv_buf[C_MAX_PACK_SIZE] = {0};
+		memset(recv_buf, 0, C_MAX_PACK_SIZE);
+		recv_len = read(obu_client->socket_fd_, recv_buf, C_MAX_PACK_SIZE);
+		if (recv_len <= 0)
+		{
+			printf("sockfd = %d\n", obu_client->socket_fd_);
+			obu_client->RegisterFrame();
+		}
+		else
+		{
+			obu_client->handle(recv_buf, recv_len);
+		}
 
 		loop_rate.sleep();
-		return 0;
+	}
+	return 0;
 }
-
-
-
-
-
-

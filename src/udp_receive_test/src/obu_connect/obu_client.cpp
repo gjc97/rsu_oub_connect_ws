@@ -14,11 +14,14 @@
 OBU_CLIENT::OBU_CLIENT()
 {
 	socket_fd_ = 0;
+	
     
     tcp_ip = "192.168.10.224";
     
     tcp_port = 5050;
+	
 	print_fun = new PRINT_FUN();
+	
 
 }
 
@@ -252,24 +255,24 @@ void OBU_CLIENT::handle(unsigned char *buf, int len)
 			memcpy(data_buf,buf+8,data_len);
 
             printf("FrameType:0x%04x data_len:%d\n",FrameType,data_len);
-			bool is_show002 = false;
-			bool is_show003 = false;
-			bool is_show004 = false;
-			bool is_show005 = false;
-			bool is_show006 = false;
-			bool is_show007 = false;
-			bool is_show008 = false;
-			bool is_show009 = false;
-			bool is_show00a = false;
-			bool is_show00b = false;
-			bool is_show00c = false;
-			bool is_show00d = false;
-			bool is_show00e = false;
-			bool is_show00f = false;
-			bool is_show201 = false;
+			bool is_show002 = true;
+			bool is_show003 = true;
+			bool is_show004 = true;
+			bool is_show005 = true;
+			bool is_show006 = true;
+			bool is_show007 = true;
+			bool is_show008 = true;
+			bool is_show009 = true;
+			bool is_show00a = true;
+			bool is_show00b = true;
+			bool is_show00c = true;
+			bool is_show00d = true;
+			bool is_show00e = true;
+			bool is_show00f = true;
+			bool is_show201 = true;
 			bool is_show202 = true;
-			bool is_show203 = false;
-			bool is_show204 = false;
+			bool is_show203 = true;
+			bool is_show204 = true;
 	
 			
             switch(FrameType)

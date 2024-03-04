@@ -167,7 +167,7 @@ SET(PROTOBUF_DIR  /usr/local/lib/)
 
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
-  protobuf
+  ${PROTOBUF_DIR}/libprotobuf.so
   pthread
 )
 
