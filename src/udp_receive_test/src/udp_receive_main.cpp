@@ -11,13 +11,6 @@ int main(int argc, char **argv)
 	ros::Rate loop_rate(10);
 	
 	OBU_CLIENT* obu_client = new OBU_CLIENT();
-	
-	std::string cwd = ros::package::getPath("udp_receive_test");
-
-	std::string inifile_path = cwd + "/config/receive_config.ini";
-	
-	obu_client->SetConfig(inifile_path);
-	
 
 	if(obu_client->ClientInit()<0)
 	{
@@ -38,9 +31,9 @@ int main(int argc, char **argv)
 
 	while (ros::ok())
 	{
-
-		// if (RegisterFrame() < 0)
-		// return 0;
+		
+		if (obu_client->RegisterFrame() < 0)
+		return 0;
 		printf("Register Frame Send Suc!\r\n");
 
 		int recv_len = 0;
@@ -59,5 +52,6 @@ int main(int argc, char **argv)
 
 		loop_rate.sleep();
 	}
+	// obu_client->CloseClient();
 	return 0;
 }

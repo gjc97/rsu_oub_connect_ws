@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 
+#include <sys/socket.h>
+
 
 
 
@@ -19,11 +21,18 @@ OBU_CLIENT::OBU_CLIENT()
     tcp_ip = "192.168.10.224";
     
     tcp_port = 5050;
-	
+	tcp_connected = false;
 	print_fun = new PRINT_FUN();
-	
 
+
+	std::string cwd = ros::package::getPath("udp_receive_test");
+
+	std::string inifile_path = cwd + "/config/receive_config.ini";
+
+	SetConfig(inifile_path);
 }
+
+
 
 
 std::string OBU_CLIENT::getValueFromIni(const std::string& filePath, const std::string& section, const std::string& key) 
@@ -59,6 +68,7 @@ void OBU_CLIENT::SetConfig(std::string input_str)
 	tcp_ip = getValueFromIni(input_str, "ClientSet", "ClientIP");
 	tcp_port = std::atoi(getValueFromIni(input_str, "ClientSet", "ClientPort").c_str());
 	std::cout << "****************************************************" << std::endl;
+	std::cout << "配置文件地址为：" << input_str << std::endl;
 	std::cout << "ip地址:" << tcp_ip << "本地端口号:" << tcp_port << std::endl;
 	std::cout << "****************************************************" << std::endl;
 }
@@ -71,6 +81,7 @@ int OBU_CLIENT::ClientInit(void)
     {
         printf("create socket error...\n)");
         return -1;
+		
     }
 
     memset(&server_addr_,0,sizeof(server_addr_));
@@ -91,10 +102,47 @@ int OBU_CLIENT::ClientInit(void)
     if(connect(socket_fd_,(struct sockaddr*)&server_addr_,sizeof(server_addr_)/sizeof(char))<0) {
         printf("TCP connect error: %s(errno: %d)\n",strerror(errno),errno);
         return -3;
+		tcp_connected = false;
     }
 
     printf("init socket successful...sockfd = %d\n",socket_fd_);
     return 1;
+}
+
+
+
+void OBU_CLIENT::Reconnect()
+{
+    // 断开当前连接
+    close(socket_fd_);
+
+	memset(&server_addr_, 0, sizeof(server_addr_));
+
+	server_addr_.sin_family = AF_INET;
+    server_addr_.sin_port = htons(tcp_port);
+    
+    while(!tcp_connected)
+    {
+        // 创建新的套接字
+        socket_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+        
+        // 绑定本地IP和端口
+        // bind(socket_fd_, (struct sockaddr*)&local_addr, sizeof(local_addr));
+        
+        // 尝试连接服务器
+        if(connect(socket_fd_,(struct sockaddr*)&server_addr_,sizeof(server_addr_)/sizeof(char)) == 0)
+        {
+            tcp_connected = true;
+            break;
+        }
+        else
+        {
+            // 连接失败，等待服务器重新启动
+            listen(socket_fd_, 20);
+			
+            accept(socket_fd_, (struct sockaddr*)&server_addr_,(socklen_t*)sizeof(server_addr_));
+        }
+    }
 }
 
 int OBU_CLIENT::CloseClient()

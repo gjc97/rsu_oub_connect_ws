@@ -44,12 +44,17 @@ public:
     sockaddr_in server_addr_;
     std::string tcp_ip;
     unsigned short tcp_port;
+
+    bool tcp_connected;
     // unsigned short tcp_port = 10086;
 public:
     OBU_CLIENT();
+
+    
     std::string getValueFromIni(const std::string &filePath, const std::string &section, const std::string &key);
     void SetConfig(std::string input_str);
     int ClientInit(void);
+    void Reconnect();
     int CloseClient(void);
     int NewThread(void *(*func)(void *), void *args);
     void *CreateRecvThread(void *args);
