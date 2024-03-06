@@ -12,5 +12,6 @@ sudo make install
 sudo ldconfig
 
 ```
-# 编译同ros编译
+# 代码编译
 
+ros编译方式
